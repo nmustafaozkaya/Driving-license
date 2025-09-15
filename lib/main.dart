@@ -98,7 +98,7 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         leading: IconButton(icon: const Icon(Icons.menu), onPressed: () {}),
         title: const Text(
-          'Ehliyet Cenk Hoca',
+          'Ehliyet Dersi ',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
