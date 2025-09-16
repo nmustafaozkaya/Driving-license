@@ -92,38 +92,45 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
   double _passProbability = 0.35; // 35% başlangıç değeri
+  String _userName = 'Kullanıcı Adı';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(icon: const Icon(Icons.menu), onPressed: () {}),
-        title: const Text(
-          'Ehliyet Dersi Uygulaması',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        title: Text(
+          _currentIndex == 0 ? 'Ehliyet Dersi Uygulaması' : 'Profil',
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         actions: [
-          IconButton(icon: const Icon(Icons.settings), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.brightness_6),
+            onPressed: widget.onThemeToggle,
+            tooltip: 'Tema Değiştir',
+          ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildExamProbabilitySection(),
-            const SizedBox(height: 16),
-            _buildSocialMediaSection(),
-            const SizedBox(height: 16),
-            _buildMainExamCard(),
-            const SizedBox(height: 16),
-            _buildDailyAndRandomExams(),
-            const SizedBox(height: 16),
-            _buildBottomCategoriesGrid(),
-          ],
-        ),
-      ),
+      body: _currentIndex == 0
+          ? SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildExamProbabilitySection(),
+                  const SizedBox(height: 16),
+                  _buildSocialMediaSection(),
+                  const SizedBox(height: 16),
+                  _buildMainExamCard(),
+                  const SizedBox(height: 16),
+                  _buildDailyAndRandomExams(),
+                  const SizedBox(height: 16),
+                  _buildBottomCategoriesGrid(),
+                ],
+              ),
+            )
+          : _buildProfilePage(),
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
@@ -133,39 +140,55 @@ class _HomePageState extends State<HomePage> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF8B0000), // Koyu kırmızı
-        borderRadius: BorderRadius.circular(12),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            'İlerleme Durumunuz',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
             ),
+            child: const Icon(Icons.trending_up, color: Colors.white, size: 28),
           ),
-          const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              minHeight: 8,
-              value: _passProbability,
-              backgroundColor: Colors.white,
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Center(
-            child: Text(
-              '${(_passProbability * 100).round()}%',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'İlerleme Durumunuz',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    minHeight: 10,
+                    value: _passProbability,
+                    backgroundColor: Colors.white24,
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Colors.limeAccent,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '${(_passProbability * 100).round()}% tamamlandı',
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                ),
+              ],
             ),
           ),
         ],
@@ -175,30 +198,20 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildSocialMediaSection() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: isDark
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
-                  spreadRadius: 1,
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-      ),
+    final chipBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildSocialIcon(Icons.campaign, 'Duyurular'),
-          _buildSocialIcon(Icons.person, 'Profil'),
-          _buildSocialAssetIcon('lib/assests/icons/instagram.png', 'Instagram'),
-          _buildSocialIcon(Icons.star, 'Favoriler'),
+          _buildActionChip(Icons.campaign, 'Duyurular', chipBg),
+          const SizedBox(width: 8),
+          _buildActionChipImage(
+            'lib/assests/icons/instagram.png',
+            'Instagram',
+            chipBg,
+          ),
+          const SizedBox(width: 8),
+          _buildActionChip(Icons.star, 'Favoriler', chipBg),
         ],
       ),
     );
@@ -245,12 +258,77 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildActionChip(IconData icon, String label, Color bg) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+        ),
+        boxShadow: isDark
+            ? null
+            : [
+                const BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                ),
+              ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18),
+          const SizedBox(width: 6),
+          Text(label, style: const TextStyle(fontSize: 12)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionChipImage(String asset, String label, Color bg) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+        ),
+        boxShadow: isDark
+            ? null
+            : [
+                const BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                ),
+              ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 18,
+            height: 18,
+            child: ClipOval(child: Image.asset(asset, fit: BoxFit.cover)),
+          ),
+          const SizedBox(width: 6),
+          Text(label, style: const TextStyle(fontSize: 12)),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMainExamCard() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
-      height: 200,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -260,39 +338,64 @@ class _HomePageState extends State<HomePage> {
                 BoxShadow(
                   color: Colors.grey.withOpacity(0.1),
                   spreadRadius: 1,
-                  blurRadius: 4,
+                  blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),
               ],
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Row(
         children: [
-          Center(
-            child: Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: Colors.blue,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Image.asset(
-                  'lib/assests/icons/question.png',
-                  fit: BoxFit.contain,
-                ),
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.blue,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Image.asset(
+                'lib/assests/icons/question.png',
+                fit: BoxFit.contain,
               ),
             ),
           ),
-          const SizedBox(height: 20),
-          Text(
-            'Çıkmış Sınav Soruları',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : Colors.black87,
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Çıkmış Sınav Soruları',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Gerçek sınav formatında sorularla hazırlanın',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  ),
+                ),
+              ],
             ),
+          ),
+          const SizedBox(width: 16),
+          ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.lightBlue,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text('Başla'),
           ),
         ],
       ),
@@ -300,11 +403,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildDailyAndRandomExams() {
-    return Row(
+    return Column(
       children: [
-        Expanded(child: _buildTodayExamCard()),
-        const SizedBox(width: 16),
-        Expanded(child: _buildRandomExamCard()),
+        _buildTodayExamCard(),
+        const SizedBox(height: 12),
+        _buildRandomExamCard(),
       ],
     );
   }
@@ -312,8 +415,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildTodayExamCard() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      height: 140,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -328,34 +430,53 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
       ),
-      child: Column(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          SizedBox(
-            width: 40,
-            height: 40,
-            child: Image.asset(
-              'lib/assests/icons/today_icon.png',
-              fit: BoxFit.contain,
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.red,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Image.asset(
+                'lib/assests/icons/today_icon.png',
+                fit: BoxFit.contain,
+              ),
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Günün Sınavı',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white : Colors.black87,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Günün Sınavı',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '13.09.2025',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            '13.09.2025',
-            style: TextStyle(
-              fontSize: 12,
-              color: isDark ? Colors.grey[400] : Colors.grey[600],
-            ),
+          const SizedBox(width: 12),
+          Icon(
+            Icons.chevron_right,
+            color: isDark ? Colors.white : Colors.black54,
           ),
         ],
       ),
@@ -365,8 +486,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildRandomExamCard() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      height: 140,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -381,29 +501,235 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
       ),
-      child: Column(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          SizedBox(
-            width: 40,
-            height: 40,
-            child: Image.asset(
-              'lib/assests/icons/random_signal.png',
-              fit: BoxFit.contain,
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.blue,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Image.asset(
+                'lib/assests/icons/random_signal.png',
+                fit: BoxFit.contain,
+              ),
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Rastgele Sınav',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white : Colors.black87,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Rastgele Sınav',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Karışık sorularla kendini test et',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Icon(
+            Icons.chevron_right,
+            color: isDark ? Colors.white : Colors.black54,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfilePage() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: isDark
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        spreadRadius: 1,
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                CircleAvatar(
+                  radius: 50,
+                  backgroundColor: Colors.blueGrey,
+                  child: const Icon(
+                    Icons.person,
+                    size: 50,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Center(
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: _userName,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                        WidgetSpan(
+                          alignment: PlaceholderAlignment.middle,
+                          child: GestureDetector(
+                            onTap: _showEditNameDialog,
+                            child: const Padding(
+                              padding: EdgeInsets.only(left: 0),
+                              child: Icon(Icons.edit, size: 18),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildProfileStat('Çözülen Soru', '120'),
+                    _buildProfileStat(
+                      'Başarı',
+                      '${(_passProbability * 100).round()}%',
+                    ),
+                    _buildProfileStat('Seri', '5 gün'),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: isDark
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        spreadRadius: 1,
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+            ),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.lock),
+                  title: const Text('Gizlilik ve Güvenlik'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {},
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.help_outline),
+                  title: const Text('Yardım ve Destek'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {},
+                ),
+              ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildProfileStat(String label, String value) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: isDark ? Colors.white : Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: isDark ? Colors.grey[400] : Colors.grey[600],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showEditNameDialog() {
+    final TextEditingController controller = TextEditingController(
+      text: _userName,
+    );
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('İsmi Düzenle'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              hintText: 'İsminizi girin',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('İptal'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _userName = controller.text.trim().isEmpty
+                      ? _userName
+                      : controller.text.trim();
+                });
+                Navigator.of(context).pop();
+              },
+              child: const Text('Kaydet'),
+            ),
+          ],
+        );
+      },
     );
   }
 
