@@ -91,6 +91,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
+  double _passProbability = 0.35; // 35% başlangıç değeri
 
   @override
   Widget build(BuildContext context) {
@@ -98,7 +99,7 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         leading: IconButton(icon: const Icon(Icons.menu), onPressed: () {}),
         title: const Text(
-          'Ehliyet Dersi ',
+          'Ehliyet Dersi Uygulaması',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -139,7 +140,7 @@ class _HomePageState extends State<HomePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Sınavı Geçme İhtimaliniz',
+            'İlerleme Durumunuz',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -147,29 +148,19 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           const SizedBox(height: 16),
-          Stack(
-            children: [
-              Container(
-                height: 8,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-              Container(
-                height: 8,
-                width: MediaQuery.of(context).size.width * 0.01, // %1 için
-                decoration: BoxDecoration(
-                  color: Colors.green,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-            ],
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              minHeight: 8,
+              value: _passProbability,
+              backgroundColor: Colors.white,
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
+            ),
           ),
           const SizedBox(height: 8),
           Center(
             child: Text(
-              '1%',
+              '${(_passProbability * 100).round()}%',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -206,8 +197,7 @@ class _HomePageState extends State<HomePage> {
         children: [
           _buildSocialIcon(Icons.campaign, 'Duyurular'),
           _buildSocialIcon(Icons.person, 'Profil'),
-          _buildSocialIcon(Icons.camera_alt, 'Instagram'),
-          _buildSocialIcon(Icons.play_circle, 'Video'),
+          _buildSocialAssetIcon('lib/assests/icons/instagram.png', 'Instagram'),
           _buildSocialIcon(Icons.star, 'Favoriler'),
         ],
       ),
@@ -226,6 +216,28 @@ class _HomePageState extends State<HomePage> {
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: Colors.white, size: 24),
+        ),
+        const SizedBox(height: 8),
+        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[400])),
+      ],
+    );
+  }
+
+  Widget _buildSocialAssetIcon(String assetPath, String label) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            color: Colors.grey[700],
+            shape: BoxShape.circle,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(4.0),
+            child: ClipOval(child: Image.asset(assetPath, fit: BoxFit.cover)),
+          ),
         ),
         const SizedBox(height: 8),
         Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[400])),
@@ -264,7 +276,13 @@ class _HomePageState extends State<HomePage> {
                 color: Colors.blue,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.quiz, color: Colors.white, size: 30),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Image.asset(
+                  'lib/assests/icons/question.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 20),
@@ -284,28 +302,108 @@ class _HomePageState extends State<HomePage> {
   Widget _buildDailyAndRandomExams() {
     return Row(
       children: [
-        Expanded(
-          child: _buildExamCard(
-            'Günün Sınavı',
-            '13.09.2025',
-            Icons.calendar_today,
-            Icons.access_time,
-            Colors.red,
-            Colors.blue,
-          ),
-        ),
+        Expanded(child: _buildTodayExamCard()),
         const SizedBox(width: 16),
-        Expanded(
-          child: _buildExamCard(
-            'Rastgele Sınav',
-            '',
-            Icons.shuffle,
-            Icons.shuffle,
-            Colors.blue,
-            Colors.blue,
-          ),
-        ),
+        Expanded(child: _buildRandomExamCard()),
       ],
+    );
+  }
+
+  Widget _buildTodayExamCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      height: 140,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  spreadRadius: 1,
+                  blurRadius: 2,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 40,
+            height: 40,
+            child: Image.asset(
+              'lib/assests/icons/today_icon.png',
+              fit: BoxFit.contain,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Günün Sınavı',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white : Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '13.09.2025',
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark ? Colors.grey[400] : Colors.grey[600],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRandomExamCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      height: 140,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  spreadRadius: 1,
+                  blurRadius: 2,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 40,
+            height: 40,
+            child: Image.asset(
+              'lib/assests/icons/random_signal.png',
+              fit: BoxFit.contain,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Rastgele Sınav',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white : Colors.black87,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -413,17 +511,16 @@ class _HomePageState extends State<HomePage> {
       ),
     ];
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        Expanded(child: _buildBottomCategoryCard(bottomCategories[0])),
-        const SizedBox(width: 12),
-        Expanded(child: _buildBottomCategoryCard(bottomCategories[1])),
-        const SizedBox(width: 12),
-        Expanded(child: _buildBottomCategoryCard(bottomCategories[2])),
-        const SizedBox(width: 12),
-        Expanded(child: _buildBottomCategoryCard(bottomCategories[3])),
-      ],
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      childAspectRatio: 3 / 2,
+      children: bottomCategories
+          .map((category) => _buildBottomCategoryCard(category))
+          .toList(),
     );
   }
 
@@ -442,7 +539,8 @@ class _HomePageState extends State<HomePage> {
         );
       },
       child: Container(
-        padding: const EdgeInsets.all(12),
+        height: 120,
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -454,15 +552,14 @@ class _HomePageState extends State<HomePage> {
               ? null
               : [
                   BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
-                    spreadRadius: 1,
-                    blurRadius: 2,
-                    offset: const Offset(0, 1),
+                    color: Colors.black12,
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
                   ),
                 ],
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Container(
               width: 40,
@@ -471,9 +568,40 @@ class _HomePageState extends State<HomePage> {
                 color: category.color,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(category.icon, color: Colors.white, size: 20),
+              child: category.title == 'Polis İşaretleri'
+                  ? Padding(
+                      padding: const EdgeInsets.all(6.0),
+                      child: Image.asset(
+                        'lib/assests/icons/police_icon.png',
+                        fit: BoxFit.contain,
+                      ),
+                    )
+                  : category.title == 'Levhalar'
+                  ? Padding(
+                      padding: const EdgeInsets.all(6.0),
+                      child: Image.asset(
+                        'lib/assests/icons/traffic_icon.png',
+                        fit: BoxFit.contain,
+                      ),
+                    )
+                  : category.title == 'Hız Kuralları'
+                  ? Padding(
+                      padding: const EdgeInsets.all(6.0),
+                      child: Image.asset(
+                        'lib/assests/icons/speed_meter_icon.png',
+                        fit: BoxFit.contain,
+                      ),
+                    )
+                  : category.title == 'Dersler'
+                  ? Padding(
+                      padding: const EdgeInsets.all(6.0),
+                      child: Image.asset(
+                        'lib/assests/icons/lessons_icon.png',
+                        fit: BoxFit.contain,
+                      ),
+                    )
+                  : Icon(category.icon, color: Colors.white, size: 20),
             ),
-            const SizedBox(height: 8),
             Text(
               category.title,
               style: TextStyle(
@@ -514,12 +642,8 @@ class _HomePageState extends State<HomePage> {
         unselectedItemColor: isDark ? Colors.grey[400] : Colors.grey[600],
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Ana Sayfa'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.leaderboard),
-            label: 'Liderlik',
-          ),
+
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Mesajlar'),
         ],
       ),
     );
