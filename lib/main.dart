@@ -1,10 +1,11 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'pages/profile_page.dart';
 import 'pages/announcements_page.dart';
 import 'pages/privacy_page.dart';
 import 'pages/faq_page.dart';
 
-void main() {
+Future<void> main() async {
   runApp(const EhliyetApp());
 }
 
@@ -191,8 +192,13 @@ class _HomePageState extends State<HomePage> {
                         radius: 26,
                         backgroundColor: Colors.white24,
                         child: Text(
-                          _userName.isNotEmpty ? _userName[0].toUpperCase() : 'K',
-                          style: const TextStyle(fontSize: 20, color: Colors.white),
+                          _userName.isNotEmpty
+                              ? _userName[0].toUpperCase()
+                              : 'K',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -225,7 +231,10 @@ class _HomePageState extends State<HomePage> {
                             const SizedBox(height: 4),
                             Text(
                               '${(_passProbability * 100).round()}% ilerleme',
-                              style: const TextStyle(color: Colors.white70, fontSize: 12),
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
                             ),
                           ],
                         ),
@@ -249,7 +258,10 @@ class _HomePageState extends State<HomePage> {
                           });
                         },
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 8,
+                            horizontal: 12,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(20),
@@ -260,7 +272,13 @@ class _HomePageState extends State<HomePage> {
                             children: const [
                               Icon(Icons.person, color: Colors.white, size: 18),
                               SizedBox(width: 6),
-                              Text('Profil', style: TextStyle(color: Colors.white, fontSize: 12)),
+                              Text(
+                                'Profil',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -275,7 +293,10 @@ class _HomePageState extends State<HomePage> {
                           );
                         },
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 8,
+                            horizontal: 12,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(20),
@@ -284,9 +305,19 @@ class _HomePageState extends State<HomePage> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: const [
-                              Icon(Icons.campaign, color: Colors.white, size: 18),
+                              Icon(
+                                Icons.campaign,
+                                color: Colors.white,
+                                size: 18,
+                              ),
                               SizedBox(width: 6),
-                              Text('Duyurular', style: TextStyle(color: Colors.white, fontSize: 12)),
+                              Text(
+                                'Duyurular',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -297,7 +328,10 @@ class _HomePageState extends State<HomePage> {
                           _showMessage('Instagram');
                         },
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 8,
+                            horizontal: 12,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(20),
@@ -317,7 +351,13 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               ),
                               const SizedBox(width: 6),
-                              const Text('Instagram', style: TextStyle(color: Colors.white, fontSize: 12)),
+                              const Text(
+                                'Instagram',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -328,7 +368,10 @@ class _HomePageState extends State<HomePage> {
                           _showMessage('Favoriler yakında.');
                         },
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 8,
+                            horizontal: 12,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(20),
@@ -339,7 +382,13 @@ class _HomePageState extends State<HomePage> {
                             children: const [
                               Icon(Icons.star, color: Colors.white, size: 18),
                               SizedBox(width: 6),
-                              Text('Favoriler', style: TextStyle(color: Colors.white, fontSize: 12)),
+                              Text(
+                                'Favoriler',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -374,9 +423,7 @@ class _HomePageState extends State<HomePage> {
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const AnnouncementsPage(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const AnnouncementsPage()),
                 );
               },
             ),
@@ -385,11 +432,9 @@ class _HomePageState extends State<HomePage> {
               title: const Text('Gizlilik Şartları'),
               onTap: () {
                 Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const PrivacyPage(),
-                  ),
-                );
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const PrivacyPage()));
               },
             ),
             ListTile(
@@ -397,11 +442,9 @@ class _HomePageState extends State<HomePage> {
               title: const Text('Sıkça Sorulan Sorular'),
               onTap: () {
                 Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const FAQPage(),
-                  ),
-                );
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const FAQPage()));
               },
             ),
             const Divider(),
@@ -463,7 +506,8 @@ class _HomePageState extends State<HomePage> {
         ),
         const SizedBox(width: 8),
         ShaderMask(
-          shaderCallback: (bounds) => gradient.createShader(Offset.zero & bounds.size),
+          shaderCallback: (bounds) =>
+              gradient.createShader(Offset.zero & bounds.size),
           blendMode: BlendMode.srcIn,
           child: const Text(
             'Trafik Koçu',
@@ -567,9 +611,7 @@ class _HomePageState extends State<HomePage> {
         GestureDetector(
           onTap: () {
             Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => const AnnouncementsPage(),
-              ),
+              MaterialPageRoute(builder: (_) => const AnnouncementsPage()),
             );
           },
           child: _buildActionChip(Icons.campaign, 'Duyurular', chipBg),
@@ -761,7 +803,9 @@ class _HomePageState extends State<HomePage> {
               backgroundColor: Colors.lightBlue,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             child: const Text('Başla'),
           ),
@@ -925,105 +969,115 @@ class _HomePageState extends State<HomePage> {
   Widget _buildPrivateLessonCard() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.amber.withOpacity(0.4)),
-            boxShadow: isDark
-                ? null
-                : [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.1),
-                      spreadRadius: 1,
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: Colors.amber[700],
-                  borderRadius: BorderRadius.circular(14),
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.amber.withOpacity(0.4)),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  spreadRadius: 1,
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
                 ),
-                child: const Icon(Icons.school, color: Colors.white, size: 28),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.amber[700],
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(Icons.school, color: Colors.white, size: 28),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 4,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Text(
-                          'Özel Ders',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : Colors.black87,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.amber[600],
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              Icon(Icons.workspace_premium, size: 14, color: Colors.white),
-                              SizedBox(width: 4),
-                              Text('Premium', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
                     Text(
-                      'Eğitmen eşliğinde kişisel çalışma planı',
+                      'Özel Ders',
                       style: TextStyle(
-                        fontSize: 12,
-                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.amber[600],
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(
+                            Icons.workspace_premium,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            'Premium',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 16),
-              ElevatedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.lock),
-                label: const Text('Premium'),
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(90, 40),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
-                  backgroundColor: Colors.amber[700],
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                const SizedBox(height: 6),
+                Text(
+                  'Eğitmen eşliğinde kişisel çalışma planı',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        );
+          const SizedBox(width: 16),
+          ElevatedButton.icon(
+            onPressed: () {},
+            icon: const Icon(Icons.lock),
+            label: const Text('Premium'),
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size(90, 40),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+              backgroundColor: Colors.amber[700],
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
-
-  
-
-  
 
   Widget _buildExamCard(
     String title,
