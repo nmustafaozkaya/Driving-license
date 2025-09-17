@@ -40,6 +40,7 @@ dependencies:
   
   # For better state management
   provider: ^6.1.1
+  url_launcher: ^6.3.0
   firebase_core: ^4.1.0
 
 dev_dependencies:

@@ -4,6 +4,7 @@ import 'pages/profile_page.dart';
 import 'pages/announcements_page.dart';
 import 'pages/privacy_page.dart';
 import 'pages/faq_page.dart';
+import 'pages/live_lesson_page.dart';
 
 Future<void> main() async {
   runApp(const EhliyetApp());
@@ -968,7 +969,15 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildPrivateLessonCard() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const LiveLessonPage(),
+          ),
+        );
+      },
+      child: Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -1058,8 +1067,14 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           const SizedBox(width: 16),
-          ElevatedButton.icon(
-            onPressed: () {},
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const LiveLessonPage(),
+                    ),
+                  );
+                },
             icon: const Icon(Icons.lock),
             label: const Text('Premium'),
             style: ElevatedButton.styleFrom(
@@ -1074,8 +1089,9 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-        ],
-      ),
+            ],
+          ),
+        ),
     );
   }
 
@@ -1158,21 +1174,21 @@ class _HomePageState extends State<HomePage> {
   Widget _buildBottomCategoriesGrid() {
     final bottomCategories = [
       CategoryItem(
-        title: 'Levhalar',
+        title: 'Trafik ve Çevre',
         subtitle: '',
         icon: Icons.traffic,
         color: Colors.red,
       ),
       CategoryItem(
-        title: 'Hız Kuralları',
+        title: 'İlk Yardım',
         subtitle: '',
-        icon: Icons.speed,
+        icon: Icons.medical_services,
         color: Colors.orange,
       ),
       CategoryItem(
-        title: 'Polis İşaretleri',
+        title: 'Motor ve Araç Bakımı',
         subtitle: '',
-        icon: Icons.policy,
+        icon: Icons.build,
         color: Colors.blue,
       ),
       CategoryItem(
