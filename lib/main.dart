@@ -3,8 +3,13 @@ import 'pages/profile_page.dart';
 import 'pages/announcements_page.dart';
 import 'pages/privacy_page.dart';
 import 'pages/faq_page.dart';
+import 'pages/all_questions_page.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const EhliyetApp());
 }
 
@@ -796,7 +801,11 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(width: 12),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AllQuestionsPage()),
+              );
+            },
             style: ElevatedButton.styleFrom(
               minimumSize: const Size(80, 36),
               backgroundColor: Colors.lightBlue,
