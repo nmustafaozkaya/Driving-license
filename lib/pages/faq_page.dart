@@ -20,35 +20,42 @@ class _FAQPageState extends State<FAQPage> {
     ),
     _FAQItem(
       question: "Ehliyet sınavında trafik dersinden kaç soru var?",
-      answer: "Ehliyet sınavındaki soruların 27`si trafik dersinden sorulmaktadır.",
+      answer:
+          "Ehliyet sınavındaki soruların 27`si trafik dersinden sorulmaktadır.",
     ),
     _FAQItem(
       question: "Ehliyet sınavında ilk yardım bilgisinden kaç soru var?",
-      answer: "Ehliyet sınavındaki soruların 13`ü ilk yardım bilgisi dersinden sorulmaktadır.",
+      answer:
+          "Ehliyet sınavındaki soruların 13`ü ilk yardım bilgisi dersinden sorulmaktadır.",
     ),
     _FAQItem(
       question: "Ehliyet sınavında motordan kaç soru var?",
-      answer: "Ehliyet sınavındaki soruların 10 tanesi araç tekniği (motor) dersinden sorulmaktadır.",
+      answer:
+          "Ehliyet sınavındaki soruların 10 tanesi araç tekniği (motor) dersinden sorulmaktadır.",
     ),
     _FAQItem(
       question: "Ehliyet sınavında 3 yanlış 1 doğruyu götürüyor mu?",
-      answer: "Hayır. Ehliyet sınavında yanlış cevapladığınız sorular net sayınızı etkilemez.",
+      answer:
+          "Hayır. Ehliyet sınavında yanlış cevapladığınız sorular net sayınızı etkilemez.",
     ),
     _FAQItem(
       question: "Ehliyet sınavını geçebilmek için kaç puan almalıyım?",
       answer: "Her testten en az 70 puan almanız gerekir.",
     ),
     _FAQItem(
-      question: "Ehliyet sınavını geçebilmek için kaç soruyu doğru yanıtlamalıyım?",
+      question:
+          "Ehliyet sınavını geçebilmek için kaç soruyu doğru yanıtlamalıyım?",
       answer: "Sınavı geçebilmek için en az 35 soruyu doğru yanıtlamalısınız.",
     ),
     _FAQItem(
       question: "Ehliyet teori (yazılı) sınavına kaç kez girme hakkı var?",
-      answer: "Adaylar en fazla 4 yazılı ve 4 uygulama sınavına girme hakkına sahiptir.",
+      answer:
+          "Adaylar en fazla 4 yazılı ve 4 uygulama sınavına girme hakkına sahiptir.",
     ),
     _FAQItem(
       question: "Ehliyet direksiyon sınavına kaç kez girme hakkı var?",
-      answer: "Direksiyon sınavına her sürücü adayının 4 kez girme hakkı vardır.",
+      answer:
+          "Direksiyon sınavına her sürücü adayının 4 kez girme hakkı vardır.",
     ),
     _FAQItem(
       question: "Sınav süresi toplam kaç saattir?",
@@ -63,7 +70,8 @@ class _FAQPageState extends State<FAQPage> {
       answer: "Başarı barajı 100 üzerinden 70’dir.",
     ),
     _FAQItem(
-      question: "Sınavda verdiğim yanlış cevaplar doğru cevaplarımı etkiler mi?",
+      question:
+          "Sınavda verdiğim yanlış cevaplar doğru cevaplarımı etkiler mi?",
       answer: "Etkilemez, yanlış doğruyu götürmüyor.",
     ),
     _FAQItem(
@@ -71,24 +79,30 @@ class _FAQPageState extends State<FAQPage> {
       answer: "Mazeretsiz olarak toplam ders saatlerinin %20’si kadar.",
     ),
     _FAQItem(
-      question: "Sürücü belgemi almadan sürücü sertifikasıyla araç kullanabilir miyim?",
-      answer: "Hayır. Trafik Tescil Bürosuna başvurup sürücü belgenizi aldıktan sonra araç kullanabilirsiniz.",
+      question:
+          "Sürücü belgemi almadan sürücü sertifikasıyla araç kullanabilir miyim?",
+      answer:
+          "Hayır. Trafik Tescil Bürosuna başvurup sürücü belgenizi aldıktan sonra araç kullanabilirsiniz.",
     ),
     _FAQItem(
       question: "Sınavda başarısız olduğumda kaç defa sınava girme hakkım var?",
-      answer: "Sınavdan başarısız olduktan sonra toplam 4 sınav hakkınız vardır (ilk + 3 tekrar).",
+      answer:
+          "Sınavdan başarısız olduktan sonra toplam 4 sınav hakkınız vardır (ilk + 3 tekrar).",
     ),
     _FAQItem(
       question: "Yazılı ve direksiyon sınavı nerede yapılıyor?",
-      answer: "Sultanbeyli’deki sürücü kurslarının direksiyon sınavları, Sultanbeyli Eşref Bitlis Bulvarı üzerinde yapılmaktadır.",
+      answer:
+          "Sultanbeyli’deki sürücü kurslarının direksiyon sınavları, Sultanbeyli Eşref Bitlis Bulvarı üzerinde yapılmaktadır.",
     ),
     _FAQItem(
       question: "Sürücü olur raporu nerelerden alınabilir?",
-      answer: "Devlet hastaneleri ve sürücü olur raporu vermeye yetkili özel hastanelerden alınabilir.",
+      answer:
+          "Devlet hastaneleri ve sürücü olur raporu vermeye yetkili özel hastanelerden alınabilir.",
     ),
     _FAQItem(
       question: "Sınav komisyon üyeleri kimlerden oluşur?",
-      answer: "İlçe Milli Eğitim Müdürlüğünün belirlediği sınav yapma yeterliliği olan öğretmenlerden oluşur.",
+      answer:
+          "İlçe Milli Eğitim Müdürlüğünün belirlediği sınav yapma yeterliliği olan öğretmenlerden oluşur.",
     ),
     _FAQItem(
       question:
@@ -97,8 +111,10 @@ class _FAQPageState extends State<FAQPage> {
           "Sertifikalar alındığı tarihten itibaren 2 yıl geçerlidir. Sağlık raporu 1 yıl geçerlidir; süresi dolarsa yenisi dosyaya eklenir.",
     ),
     _FAQItem(
-      question: "İlkokul mezunu olanlar hangi tarihe kadar sürücü belgesi için müracaat edebilir?",
-      answer: "İlkokul mezunları sürücü belgesi alabilir; şu an için süre kısıtlaması yoktur.",
+      question:
+          "İlkokul mezunu olanlar hangi tarihe kadar sürücü belgesi için müracaat edebilir?",
+      answer:
+          "İlkokul mezunları sürücü belgesi alabilir; şu an için süre kısıtlaması yoktur.",
     ),
     _FAQItem(
       question: "Stajyer ehliyet nedir?",
@@ -113,7 +129,8 @@ class _FAQPageState extends State<FAQPage> {
     _FAQItem(
       question:
           "Ben bir sürücü kursuna kayıt oldum, sınavlara girdim başarısız oldum. Kurs değiştirebilir miyim?",
-      answer: "Hayır. Sürücü kurslarında okullardaki gibi nakil işlemi bulunmamaktadır.",
+      answer:
+          "Hayır. Sürücü kurslarında okullardaki gibi nakil işlemi bulunmamaktadır.",
     ),
     _FAQItem(
       question:
@@ -121,7 +138,8 @@ class _FAQPageState extends State<FAQPage> {
       answer: "Toplam 50 soru sorulur; 35 doğru geçer.",
     ),
     _FAQItem(
-      question: "Ehliyet Sınavında verdiğim yanlış cevaplar doğru cevapları etkiler mi?",
+      question:
+          "Ehliyet Sınavında verdiğim yanlış cevaplar doğru cevapları etkiler mi?",
       answer: "Etkilemez, yanlış doğruyu götürmez.",
     ),
     _FAQItem(
@@ -183,7 +201,10 @@ class _FAQPageState extends State<FAQPage> {
                   InkWell(
                     onTap: () => setState(() => item.expanded = !item.expanded),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 18,
+                        horizontal: 16,
+                      ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
@@ -206,7 +227,10 @@ class _FAQPageState extends State<FAQPage> {
                     ),
                   ),
                   if (expanded) ...[
-                    Divider(height: 1, color: isDark ? Colors.grey[800] : Colors.grey[200]),
+                    Divider(
+                      height: 1,
+                      color: isDark ? Colors.grey[800] : Colors.grey[200],
+                    ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
                       child: Text(
@@ -232,9 +256,7 @@ class _FAQPageState extends State<FAQPage> {
 class _FAQItem {
   final String question;
   final String answer;
-  bool expanded;
+  bool expanded = false;
 
-  _FAQItem({required this.question, required this.answer, this.expanded = false});
+  _FAQItem({required this.question, required this.answer});
 }
-
-
