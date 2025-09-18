@@ -6,6 +6,8 @@ import 'pages/faq_page.dart';
 import 'pages/live_lesson_page.dart';
 import 'pages/all_questions_page.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'pages/pdf_viewer_page.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -1018,53 +1020,17 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Text(
-                      'Özel Ders',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : Colors.black87,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.amber[600],
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(
-                            Icons.workspace_premium,
-                            size: 14,
-                            color: Colors.white,
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            'Premium',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                Text(
+                  'Özel Ders',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Eğitmen eşliğinde kişisel çalışma planı',
+                  'Profesyonel eğitmenlerimize ulaşmak için tıklayın',
                   style: TextStyle(
                     fontSize: 12,
                     color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -1074,28 +1040,6 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           const SizedBox(width: 16),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const LiveLessonPage(),
-                    ),
-                  );
-                },
-            icon: const Icon(Icons.lock),
-            label: const Text('Premium'),
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(90, 40),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
-              backgroundColor: Colors.amber[700],
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
             ],
           ),
         ),
@@ -1223,15 +1167,51 @@ class _HomePageState extends State<HomePage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${category.title} kategorisi seçildi'),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+        if (category.title == 'Trafik ve Çevre') {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const PdfViewerPage(
+                assetPath: 'lib/assests/pdfs/trafikvecevredersi.pdf',
+                title: 'Trafik ve Çevre',
+              ),
             ),
-          ),
-        );
+          );
+        } else if (category.title == 'İlk Yardım') {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const PdfViewerPage(
+                assetPath: 'lib/assests/pdfs/ilkyardim.pdf',
+                title: 'İlk Yardım',
+              ),
+            ),
+          );
+        } else if (category.title == 'Motor ve Araç Bakımı') {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const PdfViewerPage(
+                assetPath: 'lib/assests/pdfs/motor.pdf',
+                title: 'Motor ve Araç Bakımı',
+              ),
+            ),
+          );
+        } else if (category.title == 'Dersler') {
+          final uri = Uri.parse('https://www.youtube.com/playlist?list=PLHR4VqMThT7m-oZQJoNiBonWuJU2pxl6G');
+          launchUrl(uri, mode: LaunchMode.externalApplication).catchError((_) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Bağlantı açılamadı.')),
+            );
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${category.title} kategorisi seçildi'),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+        }
       },
       child: Container(
         height: 120,

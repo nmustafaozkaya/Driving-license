@@ -38,48 +38,14 @@ class LiveLessonPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.amber[700],
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.workspace_premium, color: Colors.white),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 6,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Text(
-                              'Özel Ders – Premium Deneyim',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                color: isDark ? Colors.white : Colors.black87,
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.amber[600],
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: const Text(
-                                'Premium',
-                                style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                  Text(
+                    'Özel Ders',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: isDark ? Colors.white : Colors.black87,
+                      letterSpacing: 0.3,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Container(
@@ -93,8 +59,7 @@ class LiveLessonPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    headerText ??
-                        'Bu bölüm, özel ders talebinde bulunmak isteyen kullanıcılarımız için hazırlanmıştır. Sayfanın alt kısmında yer alan ‘WhatsApp’tan Ulaşın’ butonuna tıkladığınızda, WhatsApp uygulamanız üzerinden profesyonel koçlarmıza otomatik bir mesaj gönderilir. Bu mesaj, özel ders almak istediğinizi bildirir ve doğrudan iletişime geçmenizi sağlar. Böylece ek bir işlem yapmadan hızlı ve güvenli şekilde özel ders talebinizi iletebilirsiniz',
+                    headerText ?? 'Profesyonel eğitmenlerimize WhatsApp üzerinden hızla ulaşın.',
                     style: TextStyle(
                       fontSize: 15,
                       height: 1.7,
@@ -105,50 +70,101 @@ class LiveLessonPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () async {
-                final phone = '+905415619802';
-                final text = 'Merhaba, Trafik Koçu uygulamasından özel ders talep ediyorum.';
-                final waDeepLink = Uri.parse('whatsapp://send?phone=${phone.replaceAll('+', '')}&text=${Uri.encodeComponent(text)}');
-                final waWeb = Uri.parse('https://wa.me/${phone.replaceAll('+', '')}?text=${Uri.encodeComponent(text)}');
+            _InstructorCard(name: 'Abdulhakim Hoca'),
+            const SizedBox(height: 12),
+            _InstructorCard(name: 'Tuğçe Hoca'),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-                // 1) WhatsApp yüklüyse derin link
-                if (await canLaunchUrl(waDeepLink)) {
-                  final ok = await launchUrl(waDeepLink, mode: LaunchMode.externalApplication);
-                  if (ok) return;
-                }
-                // 2) Web fallback (emülatör veya WhatsApp yüklü değilse)
-                if (await canLaunchUrl(waWeb)) {
-                  final ok = await launchUrl(waWeb, mode: LaunchMode.platformDefault);
-                  if (ok) return;
-                }
-                // 3) Son çare: bilgilendir
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('WhatsApp veya tarayıcı açılamadı. Lütfen gerçek cihazda deneyin.')),
-                );
+class _InstructorCard extends StatelessWidget {
+  final String name;
+  const _InstructorCard({required this.name});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 24,
+            backgroundColor: Colors.amber[700],
+            child: Text(
+              name.isNotEmpty ? name[0].toUpperCase() : 'E',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'WhatsApp üzerinden hızlıca iletişime geçin.',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12, color: isDark ? Colors.grey[400] : Colors.grey[600]),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 150),
+            child: ElevatedButton.icon(
+              onPressed: () async {
+              final text = 'Merhaba, Trafik Koçu uygulamasından özel ders talep ediyorum.';
+              final deepLink = Uri.parse('whatsapp://send?text=${Uri.encodeComponent(text)}');
+              final webLink = Uri.parse('https://wa.me/?text=${Uri.encodeComponent(text)}');
+              if (await canLaunchUrl(deepLink)) {
+                final ok = await launchUrl(deepLink, mode: LaunchMode.externalApplication);
+                if (ok) return;
+              }
+              if (await canLaunchUrl(webLink)) {
+                final ok = await launchUrl(webLink, mode: LaunchMode.platformDefault);
+                if (ok) return;
+              }
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('WhatsApp açılamadı. Lütfen gerçek cihazda deneyin.')),
+              );
               },
               icon: SizedBox(
-                width: 20,
-                height: 20,
-                child: Image.asset(
-                  'lib/assests/logo/whatsapp.png',
-                  fit: BoxFit.contain,
-                ),
+                width: 16,
+                height: 16,
+                child: Image.asset('lib/assests/logo/whatsapp.png', fit: BoxFit.contain),
               ),
-              label: const Text('WhatsApp’tan Ulaşın'),
+              label: const Text('WhatsApp'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: const Color(0xFF25D366),
-                padding: const EdgeInsets.symmetric(vertical: 14),
                 side: const BorderSide(color: Color(0xFF25D366), width: 1),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                minimumSize: const Size(0, 0),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

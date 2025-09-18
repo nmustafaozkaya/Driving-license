@@ -44,10 +44,66 @@ class _AllQuestionsPageState extends State<AllQuestionsPage> {
     'Aralık': 12,
   };
 
+  void _showYearSheet(BuildContext context, List<int> years) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => _BottomSheetSelector<int?>(
+        title: 'Yıl Seç',
+        items: [null, ...years],
+        itemLabel: (v) => v == null ? 'Hepsi' : '$v',
+        onSelected: (v) => setState(() {
+          _selectedYear = v;
+          _selectedMonth = null;
+          _selectedDay = null;
+        }),
+      ),
+    );
+  }
+
+  void _showMonthSheet(BuildContext context, List<String> months) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => _BottomSheetSelector<String?>(
+        title: 'Ay Seç',
+        items: [null, ...months],
+        itemLabel: (v) => v ?? 'Hepsi',
+        onSelected: (v) => setState(() {
+          _selectedMonth = v;
+          _selectedDay = null;
+        }),
+      ),
+    );
+  }
+
+  void _showDaySheet(BuildContext context, List<int> days) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => _BottomSheetSelector<int?>(
+        title: 'Gün Seç',
+        items: [null, ...days],
+        itemLabel: (v) => v == null ? 'Hepsi' : '$v',
+        onSelected: (v) => setState(() => _selectedDay = v),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Çıkmış Sınav Soruları')),
+      appBar: AppBar(
+        leading: BackButton(onPressed: () => Navigator.of(context).pop()),
+        title: const Text('ÇIKMIŞ SINAV SORULARI'),
+        centerTitle: true,
+      ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: FirebaseFirestore.instance.collection('sorular').snapshots(),
         builder: (context, snapshot) {
@@ -121,101 +177,119 @@ class _AllQuestionsPageState extends State<AllQuestionsPage> {
 
           return Column(
             children: [
+              // Modern filtre barı – kaydırılabilir pill butonlar ve alt sayfa seçimleri
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<int?>(
-                        decoration: const InputDecoration(labelText: 'Yıl'),
-                        value: _selectedYear,
-                        items: [
-                          const DropdownMenuItem<int?>(
-                            value: null,
-                            child: Text('Hepsi'),
-                          ),
-                          ...years.map(
-                            (y) => DropdownMenuItem<int?>(
-                              value: y,
-                              child: Text('$y'),
-                            ),
-                          ),
-                        ],
-                        onChanged: (v) => setState(() {
-                          _selectedYear = v;
-                          _selectedMonth = null;
-                          _selectedDay = null;
-                        }),
-                      ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF2A2A2A)
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.grey[700]!
+                          : Colors.grey[300]!,
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: DropdownButtonFormField<String?>(
-                        decoration: const InputDecoration(labelText: 'Ay'),
-                        value: _selectedMonth,
-                        items: [
-                          const DropdownMenuItem<String?>(
-                            value: null,
-                            child: Text('Hepsi'),
+                  ),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _FilterPill(
+                          label: _selectedYear?.toString() ?? 'Yıl: Hepsi',
+                          icon: Icons.calendar_today,
+                          onTap: () => _showYearSheet(context, years),
+                        ),
+                        const SizedBox(width: 8),
+                        _FilterPill(
+                          label: _selectedMonth ?? 'Ay: Hepsi',
+                          icon: Icons.date_range,
+                          onTap: () => _showMonthSheet(context, months),
+                        ),
+                        const SizedBox(width: 8),
+                        _FilterPill(
+                          label: _selectedDay?.toString() ?? 'Gün: Hepsi',
+                          icon: Icons.event,
+                          onTap: () => _showDaySheet(context, days),
+                        ),
+                        const SizedBox(width: 8),
+                        if (_selectedYear != null || _selectedMonth != null || _selectedDay != null)
+                          _FilterPill(
+                            label: 'Temizle',
+                            icon: Icons.clear,
+                            onTap: () => setState(() {
+                              _selectedYear = null;
+                              _selectedMonth = null;
+                              _selectedDay = null;
+                            }),
                           ),
-                          ...months.map(
-                            (m) => DropdownMenuItem<String?>(
-                              value: m,
-                              child: Text(m),
-                            ),
-                          ),
-                        ],
-                        onChanged: (v) => setState(() {
-                          _selectedMonth = v;
-                          _selectedDay = null;
-                        }),
-                      ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: DropdownButtonFormField<int?>(
-                        decoration: const InputDecoration(labelText: 'Gün'),
-                        value: _selectedDay,
-                        items: [
-                          const DropdownMenuItem<int?>(
-                            value: null,
-                            child: Text('Hepsi'),
-                          ),
-                          ...days.map(
-                            (g) => DropdownMenuItem<int?>(
-                              value: g,
-                              child: Text('$g'),
-                            ),
-                          ),
-                        ],
-                        onChanged: (v) => setState(() => _selectedDay = v),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
               const Divider(height: 0),
               Expanded(
                 child: ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                   itemCount: filtered.length,
-                  separatorBuilder: (_, __) => const Divider(height: 0),
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
+                    final isDark = Theme.of(context).brightness == Brightness.dark;
                     final item = filtered[index];
                     final int yil = item['yıl'] as int;
                     final String ay = item['ay'] as String;
                     final int gun = item['gün'] as int;
 
-                    return ListTile(
-                      title: Text('$gun $ay $yil'),
-                      trailing: const Icon(Icons.chevron_right),
+                    return GestureDetector(
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) =>
-                                QuizQuestionsPage(yil: yil, ay: ay, gun: gun),
+                            builder: (_) => QuizQuestionsPage(yil: yil, ay: ay, gun: gun),
                           ),
                         );
                       },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF2A2A2A) : Colors.lightBlue[50],
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '$gun $ay $yil Sınav Soruları',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
+                                  color: isDark ? Colors.white : null,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: isDark ? Colors.white10 : Colors.grey.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                'Çözülmedi',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark ? Colors.white70 : Colors.black54,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     );
                   },
                 ),
@@ -223,6 +297,78 @@ class _AllQuestionsPageState extends State<AllQuestionsPage> {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _FilterPill extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+  const _FilterPill({required this.label, required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Material(
+      color: isDark ? Colors.white10 : Colors.grey[100],
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16),
+              const SizedBox(width: 6),
+              Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BottomSheetSelector<T> extends StatelessWidget {
+  final String title;
+  final List<T> items;
+  final String Function(T) itemLabel;
+  final void Function(T) onSelected;
+
+  const _BottomSheetSelector({required this.title, required this.items, required this.itemLabel, required this.onSelected});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          ),
+          const Divider(height: 0),
+          Flexible(
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final v = items[index];
+                return ListTile(
+                  title: Text(itemLabel(v)),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    onSelected(v);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
