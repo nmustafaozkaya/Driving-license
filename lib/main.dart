@@ -107,7 +107,7 @@ class _HomePageState extends State<HomePage> {
   double _passProbability = 0.0;
   String _userName = 'Kullanıcı Adı';
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  
+
   // Enhanced progress tracking
   int _totalExams = 0;
   int _completedExams = 0;
@@ -124,11 +124,13 @@ class _HomePageState extends State<HomePage> {
   Future<void> _loadProgress() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       // First, get all available exams from Firebase
-      final snapshot = await FirebaseFirestore.instance.collection('sorular').get();
+      final snapshot = await FirebaseFirestore.instance
+          .collection('sorular')
+          .get();
       final docs = snapshot.docs.map((e) => e.data()).toList();
-      
+
       // Get unique exam dates
       final Map<String, Map<String, dynamic>> uniqueDates = {};
       for (final d in docs) {
@@ -138,40 +140,40 @@ class _HomePageState extends State<HomePage> {
         final key = '$gun|$ay|$yil';
         uniqueDates[key] = {'gün': gun, 'ay': ay, 'yıl': yil};
       }
-      
+
       final dateItems = uniqueDates.values.toList();
       final totalExams = dateItems.length;
-      
+
       // Calculate progress for each exam
       int totalSolved = 0;
       int totalQuestions = 0;
       int completedExams = 0;
       int inProgressExams = 0;
-      
+
       for (final item in dateItems) {
         final int yil = item['yıl'] as int;
         final String ay = item['ay'] as String;
         final int gun = item['gün'] as int;
         final examKey = 'y$yil-$ay-g$gun';
-        
+
         // Count questions for this exam
-        final examQuestions = docs.where((d) => 
-          d['yıl'] == yil && d['ay'] == ay && d['gün'] == gun
-        ).length;
-        
+        final examQuestions = docs
+            .where((d) => d['yıl'] == yil && d['ay'] == ay && d['gün'] == gun)
+            .length;
+
         totalQuestions += examQuestions;
-        
+
         // Get solved count from SharedPreferences
         final solved = prefs.getInt('exam_solved_$examKey') ?? 0;
         totalSolved += solved;
-        
+
         if (solved == examQuestions && examQuestions > 0) {
           completedExams++;
         } else if (solved > 0) {
           inProgressExams++;
         }
       }
-      
+
       setState(() {
         _totalExams = totalExams;
         _completedExams = completedExams;
@@ -714,10 +716,7 @@ class _HomePageState extends State<HomePage> {
               ),
               Text(
                 '${_totalExams} sınav',
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12,
-                ),
+                style: const TextStyle(color: Colors.white70, fontSize: 12),
               ),
             ],
           ),
@@ -758,7 +757,12 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
@@ -780,10 +784,7 @@ class _HomePageState extends State<HomePage> {
           ),
           Text(
             title,
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 10,
-            ),
+            style: TextStyle(color: Colors.white70, fontSize: 10),
             textAlign: TextAlign.center,
           ),
         ],
@@ -816,7 +817,6 @@ class _HomePageState extends State<HomePage> {
       ],
     );
   }
-
 
   Widget _buildActionChip(IconData icon, String label, Color bg) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -948,7 +948,14 @@ class _HomePageState extends State<HomePage> {
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const AllQuestionsPage()),
+                MaterialPageRoute(
+                  builder: (_) => AllQuestionsPage(
+                    onProgressUpdated: () {
+                      // Refresh home page progress when quiz progress is updated
+                      _loadProgress();
+                    },
+                  ),
+                ),
               );
             },
             style: ElevatedButton.styleFrom(
@@ -1123,72 +1130,69 @@ class _HomePageState extends State<HomePage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => const LiveLessonPage(),
-          ),
-        );
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const LiveLessonPage()));
       },
       child: Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.amber.withOpacity(0.4)),
-        boxShadow: isDark
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
-                  spreadRadius: 1,
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.amber[700],
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(Icons.school, color: Colors.white, size: 28),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Özel Ders',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : Colors.black87,
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.amber.withOpacity(0.4)),
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
                   ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Profesyonel eğitmenlerimize ulaşmak için tıklayın',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-            ],
-          ),
+                ],
         ),
+        child: Row(
+          children: [
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: Colors.amber[700],
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(Icons.school, color: Colors.white, size: 28),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Özel Ders',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Profesyonel eğitmenlerimize ulaşmak için tıklayın',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+          ],
+        ),
+      ),
     );
   }
-
 
   Widget _buildBottomCategoriesGrid() {
     final bottomCategories = [
@@ -1263,19 +1267,23 @@ class _HomePageState extends State<HomePage> {
             ),
           );
         } else if (category.title == 'Dersler') {
-          final uri = Uri.parse('https://www.youtube.com/playlist?list=PLHR4VqMThT7m-oZQJoNiBonWuJU2pxl6G');
-          launchUrl(uri, mode: LaunchMode.externalApplication).then((ok) {
-            if (ok) return true;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Bağlantı açılamadı.')),
-            );
-            return false;
-          }).catchError((_) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Bağlantı açılamadı.')),
-            );
-            return false;
-          });
+          final uri = Uri.parse(
+            'https://www.youtube.com/playlist?list=PLHR4VqMThT7m-oZQJoNiBonWuJU2pxl6G',
+          );
+          launchUrl(uri, mode: LaunchMode.externalApplication)
+              .then((ok) {
+                if (ok) return true;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Bağlantı açılamadı.')),
+                );
+                return false;
+              })
+              .catchError((_) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Bağlantı açılamadı.')),
+                );
+                return false;
+              });
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

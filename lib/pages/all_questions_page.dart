@@ -4,7 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'quiz_questions_page.dart';
 
 class AllQuestionsPage extends StatefulWidget {
-  const AllQuestionsPage({super.key});
+  final VoidCallback? onProgressUpdated;
+
+  const AllQuestionsPage({super.key, this.onProgressUpdated});
 
   @override
   State<AllQuestionsPage> createState() => _AllQuestionsPageState();
@@ -41,7 +43,7 @@ class _AllQuestionsPageState extends State<AllQuestionsPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final progressMap = <String, ExamProgress>{};
-      
+
       // Load all exam progress data
       final keys = prefs.getKeys();
       for (final key in keys) {
@@ -52,7 +54,7 @@ class _AllQuestionsPageState extends State<AllQuestionsPage> {
           progressMap[examKey] = ExamProgress(total: total, solved: solved);
         }
       }
-      
+
       setState(() {
         _examProgress = progressMap;
       });
@@ -222,7 +224,10 @@ class _AllQuestionsPageState extends State<AllQuestionsPage> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: Theme.of(context).brightness == Brightness.dark
                         ? const Color(0xFF2A2A2A)
@@ -256,7 +261,9 @@ class _AllQuestionsPageState extends State<AllQuestionsPage> {
                           onTap: () => _showDaySheet(context, days),
                         ),
                         const SizedBox(width: 8),
-                        if (_selectedYear != null || _selectedMonth != null || _selectedDay != null)
+                        if (_selectedYear != null ||
+                            _selectedMonth != null ||
+                            _selectedDay != null)
                           _FilterPill(
                             label: 'Temizle',
                             icon: Icons.clear,
@@ -278,7 +285,8 @@ class _AllQuestionsPageState extends State<AllQuestionsPage> {
                   itemCount: filtered.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
-                    final isDark = Theme.of(context).brightness == Brightness.dark;
+                    final isDark =
+                        Theme.of(context).brightness == Brightness.dark;
                     final item = filtered[index];
                     final int yil = item['yıl'] as int;
                     final String ay = item['ay'] as String;
@@ -286,23 +294,38 @@ class _AllQuestionsPageState extends State<AllQuestionsPage> {
                     final progress = _getExamProgress(yil, ay, gun);
                     final statusText = _getStatusText(progress);
                     final statusColor = _getStatusColor(progress);
-                    final progressPercentage = progress.total > 0 ? (progress.solved / progress.total) : 0.0;
+                    final progressPercentage = progress.total > 0
+                        ? (progress.solved / progress.total)
+                        : 0.0;
 
                     return GestureDetector(
                       onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => QuizQuestionsPage(yil: yil, ay: ay, gun: gun),
-                          ),
-                        ).then((_) {
-                          // Refresh progress when returning from quiz
-                          _loadExamProgress();
-                        });
+                        Navigator.of(context)
+                            .push(
+                              MaterialPageRoute(
+                                builder: (_) => QuizQuestionsPage(
+                                  yil: yil,
+                                  ay: ay,
+                                  gun: gun,
+                                ),
+                              ),
+                            )
+                            .then((_) {
+                              // Refresh progress when returning from quiz
+                              _loadExamProgress();
+                              // Notify parent to refresh home page progress
+                              widget.onProgressUpdated?.call();
+                            });
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 18,
+                          horizontal: 16,
+                        ),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF2A2A2A) : Colors.lightBlue[50],
+                          color: isDark
+                              ? const Color(0xFF2A2A2A)
+                              : Colors.lightBlue[50],
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Column(
@@ -324,11 +347,16 @@ class _AllQuestionsPageState extends State<AllQuestionsPage> {
                                 ),
                                 const SizedBox(width: 12),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 6,
+                                    horizontal: 12,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: statusColor.withOpacity(0.15),
                                     borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: statusColor.withOpacity(0.3)),
+                                    border: Border.all(
+                                      color: statusColor.withOpacity(0.3),
+                                    ),
                                   ),
                                   child: Text(
                                     statusText,
@@ -347,24 +375,34 @@ class _AllQuestionsPageState extends State<AllQuestionsPage> {
                                 children: [
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           'İlerleme: ${progress.solved}/${progress.total}',
                                           style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w600,
-                                            color: isDark ? Colors.white70 : Colors.black54,
+                                            color: isDark
+                                                ? Colors.white70
+                                                : Colors.black54,
                                           ),
                                         ),
                                         const SizedBox(height: 4),
                                         ClipRRect(
-                                          borderRadius: BorderRadius.circular(4),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
                                           child: LinearProgressIndicator(
                                             value: progressPercentage,
                                             minHeight: 6,
-                                            backgroundColor: isDark ? Colors.white10 : Colors.grey[300],
-                                            valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+                                            backgroundColor: isDark
+                                                ? Colors.white10
+                                                : Colors.grey[300],
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                  statusColor,
+                                                ),
                                           ),
                                         ),
                                       ],
@@ -401,7 +439,11 @@ class _FilterPill extends StatelessWidget {
   final String label;
   final IconData icon;
   final VoidCallback onTap;
-  const _FilterPill({required this.label, required this.icon, required this.onTap});
+  const _FilterPill({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -434,7 +476,12 @@ class _BottomSheetSelector<T> extends StatelessWidget {
   final String Function(T) itemLabel;
   final void Function(T) onSelected;
 
-  const _BottomSheetSelector({required this.title, required this.items, required this.itemLabel, required this.onSelected});
+  const _BottomSheetSelector({
+    required this.title,
+    required this.items,
+    required this.itemLabel,
+    required this.onSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -444,7 +491,10 @@ class _BottomSheetSelector<T> extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
           ),
           const Divider(height: 0),
           Flexible(
