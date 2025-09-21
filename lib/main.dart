@@ -6,8 +6,10 @@ import 'pages/faq_page.dart';
 import 'pages/live_lesson_page.dart';
 import 'pages/all_questions_page.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'pages/pdf_viewer_page.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -102,9 +104,88 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
-  double _passProbability = 0.35; // 35% başlangıç değeri
+  double _passProbability = 0.0;
   String _userName = 'Kullanıcı Adı';
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  
+  // Enhanced progress tracking
+  int _totalExams = 0;
+  int _completedExams = 0;
+  int _inProgressExams = 0;
+  int _totalQuestions = 0;
+  int _solvedQuestions = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProgress();
+  }
+
+  Future<void> _loadProgress() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      // First, get all available exams from Firebase
+      final snapshot = await FirebaseFirestore.instance.collection('sorular').get();
+      final docs = snapshot.docs.map((e) => e.data()).toList();
+      
+      // Get unique exam dates
+      final Map<String, Map<String, dynamic>> uniqueDates = {};
+      for (final d in docs) {
+        final int yil = d['yıl'] is int ? d['yıl'] as int : 0;
+        final String ay = (d['ay'] ?? '').toString();
+        final int gun = d['gün'] is int ? d['gün'] as int : 0;
+        final key = '$gun|$ay|$yil';
+        uniqueDates[key] = {'gün': gun, 'ay': ay, 'yıl': yil};
+      }
+      
+      final dateItems = uniqueDates.values.toList();
+      final totalExams = dateItems.length;
+      
+      // Calculate progress for each exam
+      int totalSolved = 0;
+      int totalQuestions = 0;
+      int completedExams = 0;
+      int inProgressExams = 0;
+      
+      for (final item in dateItems) {
+        final int yil = item['yıl'] as int;
+        final String ay = item['ay'] as String;
+        final int gun = item['gün'] as int;
+        final examKey = 'y$yil-$ay-g$gun';
+        
+        // Count questions for this exam
+        final examQuestions = docs.where((d) => 
+          d['yıl'] == yil && d['ay'] == ay && d['gün'] == gun
+        ).length;
+        
+        totalQuestions += examQuestions;
+        
+        // Get solved count from SharedPreferences
+        final solved = prefs.getInt('exam_solved_$examKey') ?? 0;
+        totalSolved += solved;
+        
+        if (solved == examQuestions && examQuestions > 0) {
+          completedExams++;
+        } else if (solved > 0) {
+          inProgressExams++;
+        }
+      }
+      
+      setState(() {
+        _totalExams = totalExams;
+        _completedExams = completedExams;
+        _inProgressExams = inProgressExams;
+        _totalQuestions = totalQuestions;
+        _solvedQuestions = totalSolved;
+        _passProbability = totalQuestions > 0
+            ? (totalSolved / totalQuestions).clamp(0.0, 1.0)
+            : 0.0;
+      });
+    } catch (e) {
+      print('Error loading progress: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -236,10 +317,17 @@ class _HomePageState extends State<HomePage> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '${(_passProbability * 100).round()}% ilerleme',
+                              '$_solvedQuestions/$_totalQuestions soru',
                               style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 12,
+                              ),
+                            ),
+                            Text(
+                              '${(_passProbability * 100).round()}% tamamlandı',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 10,
                               ),
                             ),
                           ],
@@ -550,58 +638,153 @@ class _HomePageState extends State<HomePage> {
         ),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(6.0),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.asset(
-                  'lib/assests/logo/logo.jpeg',
-                  fit: BoxFit.cover,
+          Row(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'İlerleme Durumunuz',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: LinearProgressIndicator(
-                    minHeight: 10,
-                    value: _passProbability,
-                    backgroundColor: Colors.white24,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      Colors.limeAccent,
+                child: Padding(
+                  padding: const EdgeInsets.all(6.0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.asset(
+                      'lib/assests/logo/logo.jpeg',
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  '${(_passProbability * 100).round()}% tamamlandı',
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Genel İlerleme Durumunuz',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '$_solvedQuestions/$_totalQuestions soru çözüldü',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Progress bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              minHeight: 12,
+              value: _passProbability,
+              backgroundColor: Colors.white24,
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                Colors.limeAccent,
+              ),
             ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${(_passProbability * 100).round()}% tamamlandı',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Text(
+                '${_totalExams} sınav',
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Exam statistics
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  'Tamamlanan',
+                  '$_completedExams',
+                  Icons.check_circle,
+                  Colors.green,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildStatCard(
+                  'Devam Eden',
+                  '$_inProgressExams',
+                  Icons.hourglass_empty,
+                  Colors.orange,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildStatCard(
+                  'Bekleyen',
+                  '${_totalExams - _completedExams - _inProgressExams}',
+                  Icons.schedule,
+                  Colors.grey,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white.withOpacity(0.2)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          Text(
+            title,
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 10,
+            ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -634,46 +817,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildSocialIcon(IconData icon, String label) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: Colors.grey[700],
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: Colors.white, size: 24),
-        ),
-        const SizedBox(height: 8),
-        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[400])),
-      ],
-    );
-  }
-
-  Widget _buildSocialAssetIcon(String assetPath, String label) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: Colors.grey[700],
-            shape: BoxShape.circle,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(4.0),
-            child: ClipOval(child: Image.asset(assetPath, fit: BoxFit.cover)),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[400])),
-      ],
-    );
-  }
 
   Widget _buildActionChip(IconData icon, String label, Color bg) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -1046,81 +1189,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildExamCard(
-    String title,
-    String subtitle,
-    IconData icon1,
-    IconData icon2,
-    Color color1,
-    Color color2,
-  ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      height: 120,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: isDark
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
-                  spreadRadius: 1,
-                  blurRadius: 2,
-                  offset: const Offset(0, 1),
-                ),
-              ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  color: color1,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Icon(icon1, color: Colors.white, size: 16),
-              ),
-              const SizedBox(width: 4),
-              Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  color: color2,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Icon(icon2, color: Colors.white, size: 16),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white : Colors.black87,
-            ),
-          ),
-          if (subtitle.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 12,
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
 
   Widget _buildBottomCategoriesGrid() {
     final bottomCategories = [
@@ -1196,10 +1264,17 @@ class _HomePageState extends State<HomePage> {
           );
         } else if (category.title == 'Dersler') {
           final uri = Uri.parse('https://www.youtube.com/playlist?list=PLHR4VqMThT7m-oZQJoNiBonWuJU2pxl6G');
-          launchUrl(uri, mode: LaunchMode.externalApplication).catchError((_) {
+          launchUrl(uri, mode: LaunchMode.externalApplication).then((ok) {
+            if (ok) return true;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Bağlantı açılamadı.')),
             );
+            return false;
+          }).catchError((_) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Bağlantı açılamadı.')),
+            );
+            return false;
           });
         } else {
           ScaffoldMessenger.of(context).showSnackBar(

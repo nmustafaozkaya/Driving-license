@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 
 void main() {
@@ -148,9 +149,19 @@ class _QuizQuestionsPageState extends State<QuizQuestionsPage> {
             return const Center(child: Text('Soru bulunamadı'));
           }
 
-          final docs = snapshot.data!.docs.map((e) => e.data()).toList();
+          final docs = snapshot.data!.docs;
 
-          return _QuestionFlow(docs: docs);
+          // Save exam total and last exam key for home progress
+          () async {
+            try {
+              final prefs = await SharedPreferences.getInstance();
+              final examKey = 'y${widget.yil}-${widget.ay}-g${widget.gun}';
+              await prefs.setInt('exam_total_' + examKey, docs.length);
+              await prefs.setString('last_exam_key', examKey);
+            } catch (_) {}
+          }();
+
+          return _QuestionFlow(docs: docs, yil: widget.yil, ay: widget.ay, gun: widget.gun);
         },
       ),
     );
@@ -158,8 +169,11 @@ class _QuizQuestionsPageState extends State<QuizQuestionsPage> {
 }
 
 class _QuestionFlow extends StatefulWidget {
-  final List<Map<String, dynamic>> docs;
-  const _QuestionFlow({required this.docs});
+  final List<QueryDocumentSnapshot<Map<String, dynamic>>> docs;
+  final int yil;
+  final String ay;
+  final int gun;
+  const _QuestionFlow({required this.docs, required this.yil, required this.ay, required this.gun});
 
   @override
   State<_QuestionFlow> createState() => _QuestionFlowState();
@@ -173,10 +187,19 @@ class _QuestionFlowState extends State<_QuestionFlow> {
   int _wrongCount = 0;
   Duration _remaining = const Duration(minutes: 45);
   Timer? _timer;
+  
+  // Persisted state per question
+  late List<int?> _selectedOptionsByIndex;
+  late List<bool> _lockedByIndex;
+  String get _examKey => 'y${widget.yil}-${widget.ay}-g${widget.gun}';
 
   @override
   void initState() {
     super.initState();
+    // Initialize per-question persisted states
+    _selectedOptionsByIndex = List<int?>.filled(widget.docs.length, null);
+    _lockedByIndex = List<bool>.filled(widget.docs.length, false);
+    _restoreExamProgress();
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (!mounted) return;
       setState(() {
@@ -185,6 +208,46 @@ class _QuestionFlowState extends State<_QuestionFlow> {
         }
       });
     });
+  }
+
+  Future<void> _restoreExamProgress() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedList = prefs.getStringList('answers_' + _examKey);
+      if (savedList != null && savedList.length == widget.docs.length) {
+        for (int i = 0; i < savedList.length; i++) {
+          final v = int.tryParse(savedList[i]);
+          if (v != null && v >= 0) {
+            _selectedOptionsByIndex[i] = v;
+            _lockedByIndex[i] = true; // Only lock if there's a valid answer
+          } else {
+            _selectedOptionsByIndex[i] = null;
+            _lockedByIndex[i] = false; // Don't lock if no answer
+          }
+        }
+        
+        // Find the first unanswered question
+        int firstUnansweredIndex = 0;
+        for (int i = 0; i < _lockedByIndex.length; i++) {
+          if (!_lockedByIndex[i]) {
+            firstUnansweredIndex = i;
+            break;
+          }
+        }
+        
+        setState(() {
+          _index = firstUnansweredIndex;
+          _selectedOption = _selectedOptionsByIndex[_index];
+          _locked = _lockedByIndex[_index];
+          _recalculateStats();
+        });
+      } else {
+        setState(() {
+          _selectedOption = _selectedOptionsByIndex[_index];
+          _locked = _lockedByIndex[_index];
+        });
+      }
+    } catch (_) {}
   }
 
   @override
@@ -197,8 +260,9 @@ class _QuestionFlowState extends State<_QuestionFlow> {
     if (_index < widget.docs.length - 1) {
       setState(() {
         _index++;
-        _selectedOption = null;
-        _locked = false;
+        // Restore persisted state for next question
+        _selectedOption = _selectedOptionsByIndex[_index];
+        _locked = _lockedByIndex[_index];
       });
     }
   }
@@ -207,20 +271,77 @@ class _QuestionFlowState extends State<_QuestionFlow> {
     if (_index > 0) {
       setState(() {
         _index--;
-        _selectedOption = null;
-        _locked = false;
+        // Restore persisted state for previous question
+        _selectedOption = _selectedOptionsByIndex[_index];
+        _locked = _lockedByIndex[_index];
       });
+    }
+  }
+
+  void _recalculateStats() {
+    int correct = 0;
+    int wrong = 0;
+    for (int i = 0; i < widget.docs.length; i++) {
+      final d = widget.docs[i].data();
+      final int answerIndex = d['cevap'] is int
+          ? d['cevap'] as int
+          : int.tryParse('${d['cevap']}') ?? -1;
+      final sel = _selectedOptionsByIndex[i];
+      final isLocked = _lockedByIndex[i];
+      if (isLocked && sel != null) {
+        if (sel == answerIndex) {
+          correct++;
+        } else {
+          wrong++;
+        }
+      }
+    }
+    _correctCount = correct;
+    _wrongCount = wrong;
+  }
+
+  Future<void> _recordSolvedIfNeeded(int questionIndex, int selectedIndex, int correctIndex) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final solved = prefs.getStringList('solved_questions') ?? <String>[];
+      final d = widget.docs[questionIndex];
+      final String soruId = d.id.toString();
+      final key = _examKey + '-' + soruId;
+      if (!solved.contains(key)) {
+        solved.add(key);
+        await prefs.setStringList('solved_questions', solved);
+      }
+      
+      // Save per-exam answers list (only save valid answers, use -1 for unanswered)
+      final answers = List<String>.generate(widget.docs.length, (i) {
+        if (_lockedByIndex[i] && _selectedOptionsByIndex[i] != null) {
+          return _selectedOptionsByIndex[i]!.toString();
+        }
+        return '-1'; // -1 means unanswered
+      });
+      await prefs.setStringList('answers_' + _examKey, answers);
+      
+      // Save per-exam solved count (only count actually answered questions)
+      final solvedCount = _lockedByIndex.where((e) => e).length;
+      await prefs.setInt('exam_solved_' + _examKey, solvedCount);
+    } catch (_) {
+      // sessizce geç
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final d = widget.docs[_index];
+    final d = widget.docs[_index].data();
     final String soru = (d['soru'] ?? '').toString();
-    final List<dynamic> secenekler = (d['cevaplar'] ?? []) as List<dynamic>;
+    final List<dynamic> cevaplar = (d['cevaplar'] ?? []) as List<dynamic>;
     final int cevapIndex = d['cevap'] is int
         ? d['cevap'] as int
         : int.tryParse('${d['cevap']}') ?? -1;
+    
+    // New data structure support
+    final List<dynamic> soruResimleri = (d['soru_resimleri'] ?? []) as List<dynamic>;
+    final String soruVideosu = (d['soru_videosu'] ?? '').toString();
+    final String kategori = (d['kategori'] ?? '').toString();
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -291,13 +412,45 @@ class _QuestionFlowState extends State<_QuestionFlow> {
                         BoxShadow(color: Colors.black12.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 2)),
                     ],
                   ),
-                  child: Text(
-                    soru,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (kategori.isNotEmpty) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                          ),
+                          child: Text(
+                            kategori,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.blue[700],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      Text(
+                        soru,
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                      ),
+                      if (soruResimleri.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        _buildQuestionImages(soruResimleri),
+                      ],
+                      if (soruVideosu.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        _buildQuestionVideo(soruVideosu),
+                      ],
+                    ],
                   ),
                 ),
                 const SizedBox(height: 14),
-                ...List.generate(secenekler.length, (i) {
+                ...List.generate(cevaplar.length, (i) {
                   final bool isSelected = _selectedOption == i;
                   final bool isCorrect = i == cevapIndex;
                   Color? tileColor;
@@ -348,19 +501,19 @@ class _QuestionFlowState extends State<_QuestionFlow> {
                           ),
                         ),
                       ),
-                      title: Text('${secenekler[i]}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                      onTap: () {
-                        if (_locked) return;
-                        final tappedCorrect = i == cevapIndex;
+                      title: _buildAnswerContent(cevaplar[i]),
+                  onTap: () async {
+                    if (_locked) return;
                         setState(() {
-                          _selectedOption = i;
-                          _locked = true;
-                          if (tappedCorrect) {
-                            _correctCount++;
-                          } else {
-                            _wrongCount++;
-                          }
+                      // Persist selection for this question
+                      _selectedOption = i;
+                      _locked = true;
+                      _selectedOptionsByIndex[_index] = i;
+                      _lockedByIndex[_index] = true;
+                      // Recalculate stats from persisted answers
+                      _recalculateStats();
                         });
+                    await _recordSolvedIfNeeded(_index, i, cevapIndex);
                       },
                     ),
                   );
@@ -398,6 +551,181 @@ class _QuestionFlowState extends State<_QuestionFlow> {
                 ),
               ),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAnswerContent(dynamic cevap) {
+    if (cevap is Map<String, dynamic>) {
+      // New data structure: {metin: "...", resim_url: "..."}
+      final String metin = cevap['metin'] ?? '';
+      final String resimUrl = cevap['resim_url'] ?? '';
+      
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            metin,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+          if (resimUrl.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                resimUrl,
+                height: 100,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.image_not_supported, color: Colors.grey),
+                  );
+                },
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ],
+      );
+    } else {
+      // Old data structure: just string
+      return Text(
+        cevap.toString(),
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      );
+    }
+  }
+
+  Widget _buildQuestionImages(List<dynamic> resimler) {
+    final validResimler = resimler.where((url) => url.toString().isNotEmpty).toList();
+    
+    if (validResimler.isEmpty) return const SizedBox.shrink();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Soru Resimleri:',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[600],
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 120,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: validResimler.length,
+            itemBuilder: (context, index) {
+              return Container(
+                margin: const EdgeInsets.only(right: 8),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    validResimler[index].toString(),
+                    height: 120,
+                    width: 120,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 120,
+                        width: 120,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.image_not_supported, color: Colors.grey),
+                      );
+                    },
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        height: 120,
+                        width: 120,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuestionVideo(String videoUrl) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Soru Videosu:',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[600],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 200,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.grey[300],
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.play_circle_outline, size: 48, color: Colors.grey),
+                const SizedBox(height: 8),
+                Text(
+                  'Video: ${videoUrl.split('/').last}',
+                  style: const TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(height: 8),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    // TODO: Implement video player or external link
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Video oynatma özelliği yakında eklenecek')),
+                    );
+                  },
+                  icon: const Icon(Icons.play_arrow),
+                  label: const Text('Videoyu Oynat'),
+                ),
+              ],
+            ),
           ),
         ),
       ],

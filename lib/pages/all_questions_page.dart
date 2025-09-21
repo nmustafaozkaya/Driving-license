@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'quiz_questions_page.dart';
 
 class AllQuestionsPage extends StatefulWidget {
@@ -13,21 +14,7 @@ class _AllQuestionsPageState extends State<AllQuestionsPage> {
   int? _selectedYear;
   String? _selectedMonth;
   int? _selectedDay;
-
-  final List<String> _aylar = const [
-    'Ocak',
-    'Şubat',
-    'Mart',
-    'Nisan',
-    'Mayıs',
-    'Haziran',
-    'Temmuz',
-    'Ağustos',
-    'Eylül',
-    'Ekim',
-    'Kasım',
-    'Aralık',
-  ];
+  Map<String, ExamProgress> _examProgress = {};
 
   static const Map<String, int> monthIndex = {
     'Ocak': 1,
@@ -43,6 +30,59 @@ class _AllQuestionsPageState extends State<AllQuestionsPage> {
     'Kasım': 11,
     'Aralık': 12,
   };
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExamProgress();
+  }
+
+  Future<void> _loadExamProgress() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final progressMap = <String, ExamProgress>{};
+      
+      // Load all exam progress data
+      final keys = prefs.getKeys();
+      for (final key in keys) {
+        if (key.startsWith('exam_total_')) {
+          final examKey = key.substring('exam_total_'.length);
+          final total = prefs.getInt(key) ?? 0;
+          final solved = prefs.getInt('exam_solved_$examKey') ?? 0;
+          progressMap[examKey] = ExamProgress(total: total, solved: solved);
+        }
+      }
+      
+      setState(() {
+        _examProgress = progressMap;
+      });
+    } catch (e) {
+      // Handle error silently
+    }
+  }
+
+  String _getExamKey(int yil, String ay, int gun) {
+    return 'y$yil-$ay-g$gun';
+  }
+
+  ExamProgress _getExamProgress(int yil, String ay, int gun) {
+    final key = _getExamKey(yil, ay, gun);
+    return _examProgress[key] ?? ExamProgress(total: 0, solved: 0);
+  }
+
+  String _getStatusText(ExamProgress progress) {
+    if (progress.total == 0) return 'Çözülmedi';
+    if (progress.solved == 0) return 'Çözülmedi';
+    if (progress.solved == progress.total) return 'Çözüldü';
+    return 'Devam Et';
+  }
+
+  Color _getStatusColor(ExamProgress progress) {
+    if (progress.total == 0) return Colors.grey;
+    if (progress.solved == 0) return Colors.red;
+    if (progress.solved == progress.total) return Colors.green;
+    return Colors.orange;
+  }
 
   void _showYearSheet(BuildContext context, List<int> years) {
     showModalBottomSheet(
@@ -98,6 +138,7 @@ class _AllQuestionsPageState extends State<AllQuestionsPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Not: toplam soru sayısını hesaplayıp ana ekrana göstermek için istenirse SharedPreferences'a yazabiliriz.
     return Scaffold(
       appBar: AppBar(
         leading: BackButton(onPressed: () => Navigator.of(context).pop()),
@@ -242,6 +283,10 @@ class _AllQuestionsPageState extends State<AllQuestionsPage> {
                     final int yil = item['yıl'] as int;
                     final String ay = item['ay'] as String;
                     final int gun = item['gün'] as int;
+                    final progress = _getExamProgress(yil, ay, gun);
+                    final statusText = _getStatusText(progress);
+                    final statusColor = _getStatusColor(progress);
+                    final progressPercentage = progress.total > 0 ? (progress.solved / progress.total) : 0.0;
 
                     return GestureDetector(
                       onTap: () {
@@ -249,7 +294,10 @@ class _AllQuestionsPageState extends State<AllQuestionsPage> {
                           MaterialPageRoute(
                             builder: (_) => QuizQuestionsPage(yil: yil, ay: ay, gun: gun),
                           ),
-                        );
+                        ).then((_) {
+                          // Refresh progress when returning from quiz
+                          _loadExamProgress();
+                        });
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
@@ -257,36 +305,83 @@ class _AllQuestionsPageState extends State<AllQuestionsPage> {
                           color: isDark ? const Color(0xFF2A2A2A) : Colors.lightBlue[50],
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: Text(
-                                '$gun $ay $yil Sınav Soruları',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w800,
-                                  color: isDark ? Colors.white : null,
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    '$gun $ay $yil Sınav Soruları',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w800,
+                                      color: isDark ? Colors.white : null,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Container(
-                              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-                              decoration: BoxDecoration(
-                                color: isDark ? Colors.white10 : Colors.grey.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                'Çözülmedi',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark ? Colors.white70 : Colors.black54,
+                                const SizedBox(width: 12),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+                                  decoration: BoxDecoration(
+                                    color: statusColor.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: statusColor.withOpacity(0.3)),
+                                  ),
+                                  child: Text(
+                                    statusText,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      color: statusColor,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
+                            if (progress.total > 0) ...[
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'İlerleme: ${progress.solved}/${progress.total}',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            color: isDark ? Colors.white70 : Colors.black54,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(4),
+                                          child: LinearProgressIndicator(
+                                            value: progressPercentage,
+                                            minHeight: 6,
+                                            backgroundColor: isDark ? Colors.white10 : Colors.grey[300],
+                                            valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    '${(progressPercentage * 100).round()}%',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: statusColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -372,4 +467,11 @@ class _BottomSheetSelector<T> extends StatelessWidget {
       ),
     );
   }
+}
+
+class ExamProgress {
+  final int total;
+  final int solved;
+
+  ExamProgress({required this.total, required this.solved});
 }
