@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "710146817481",
-    "project_id": "trafikkocu",
-    "storage_bucket": "trafikkocu.firebasestorage.app"
+    "project_number": "608441754655",
+    "project_id": "oval-cyclist-472813-c6",
+    "storage_bucket": "oval-cyclist-472813-c6.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:710146817481:android:e5ef3819a8fd18833ebc18",
+        "mobilesdk_app_id": "1:608441754655:android:a529af69ea4d658a5e212a",
         "android_client_info": {
-          "package_name": "com.example.ehliyet"
+          "package_name": "com.trafikkocu.app"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyD4DbrCSKiL9fVxhLHgRPpDk6CRyp5VwDo"
+          "current_key": "AIzaSyASp25aUuvT78sxE3oaBXU4secEXjK1y9w"
         }
       ],
       "services": {

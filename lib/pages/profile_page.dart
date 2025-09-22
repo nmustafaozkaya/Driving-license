@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   final String userName;
   final double passProbability; // 0..1
   final ValueChanged<String> onNameChanged;
@@ -11,6 +12,38 @@ class ProfilePage extends StatelessWidget {
     required this.passProbability,
     required this.onNameChanged,
   });
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  int _solvedQuestions = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSolvedQuestions();
+  }
+
+  Future<void> _loadSolvedQuestions() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      int totalSolved = 0;
+      final keys = prefs.getKeys();
+      for (final key in keys) {
+        if (key.startsWith('exam_solved_')) {
+          totalSolved += prefs.getInt(key) ?? 0;
+        }
+      }
+      if (!mounted) return;
+      setState(() {
+        _solvedQuestions = totalSolved;
+      });
+    } catch (_) {
+      // ignore errors
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +87,7 @@ class ProfilePage extends StatelessWidget {
                     TextSpan(
                       children: [
                         TextSpan(
-                          text: userName,
+                          text: widget.userName,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -80,13 +113,12 @@ class ProfilePage extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _buildProfileStat(context, 'Çözülen Soru', '120'),
+                    _buildProfileStat(context, 'Çözülen Soru', '$_solvedQuestions'),
                     _buildProfileStat(
                       context,
                       'Başarı',
-                      '${(passProbability * 100).round()}%',
+                      '${(widget.passProbability * 100).round()}%',
                     ),
-                    _buildProfileStat(context, 'Seri', '5 gün'),
                   ],
                 ),
               ],
@@ -154,7 +186,7 @@ class ProfilePage extends StatelessWidget {
   }
 
   void _showEditNameDialog(BuildContext context) {
-    final TextEditingController controller = TextEditingController(text: userName);
+    final TextEditingController controller = TextEditingController(text: widget.userName);
     showDialog(
       context: context,
       builder: (context) {
@@ -176,7 +208,7 @@ class ProfilePage extends StatelessWidget {
               onPressed: () {
                 final newName = controller.text.trim();
                 if (newName.isNotEmpty) {
-                  onNameChanged(newName);
+                  widget.onNameChanged(newName);
                 }
                 Navigator.of(context).pop();
               },
