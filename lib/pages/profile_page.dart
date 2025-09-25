@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'privacy_page.dart';
+import 'live_lesson_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final String userName;
@@ -141,17 +143,27 @@ class _ProfilePageState extends State<ProfilePage> {
                     ],
             ),
             child: Column(
-              children: const [
+              children: [
                 ListTile(
-                  leading: Icon(Icons.lock),
-                  title: Text('Gizlilik ve Güvenlik'),
-                  trailing: Icon(Icons.chevron_right),
+                  leading: const Icon(Icons.lock),
+                  title: const Text('Gizlilik ve Güvenlik'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const PrivacyPage()),
+                    );
+                  },
                 ),
-                Divider(height: 1),
+                const Divider(height: 1),
                 ListTile(
-                  leading: Icon(Icons.help_outline),
-                  title: Text('Yardım ve Destek'),
-                  trailing: Icon(Icons.chevron_right),
+                  leading: const Icon(Icons.help_outline),
+                  title: const Text('Yardım ve Destek'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const LiveLessonPage()),
+                    );
+                  },
                 ),
               ],
             ),

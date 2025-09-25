@@ -6,6 +6,9 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+import java.util.Properties
+import java.io.FileInputStream
+
 android {
     namespace = "com.trafikkocu.app"
     compileSdk = flutter.compileSdkVersion
@@ -29,13 +32,41 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        // Optional: ship only Turkish resources to reduce size
+        resourceConfigurations.addAll(listOf("tr"))
+    }
+
+    // Load keystore from android/key.properties if present
+    val keystoreProps = Properties().apply {
+        val f = rootProject.file("android/key.properties")
+        if (f.exists()) {
+            this.load(FileInputStream(f))
+        }
+    }
+
+    signingConfigs {
+        create("release") {
+            val storePath = keystoreProps["storeFile"] as String?
+            if (storePath != null) {
+                storeFile = rootProject.file(storePath)
+            }
+            storePassword = keystoreProps["storePassword"] as String?
+            keyAlias = keystoreProps["keyAlias"] as String?
+            keyPassword = keystoreProps["keyPassword"] as String?
+        }
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            // Use release signing if configured, otherwise fall back to debug to allow local builds
+            signingConfig = if ((signingConfigs.findByName("release")?.storeFile) != null)
+                signingConfigs.getByName("release") else signingConfigs.getByName("debug")
         }
     }
 }

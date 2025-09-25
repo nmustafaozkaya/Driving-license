@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'package:video_player/video_player.dart';
+import 'package:chewie/chewie.dart';
 
 void main() {
   runApp(const MyApp());
@@ -210,6 +212,46 @@ class _QuestionFlowState extends State<_QuestionFlow> {
     });
   }
 
+  Widget _buildMetaChips(String kategori) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color chipBg = isDark ? const Color(0xFF2E2A57) : const Color(0xFFEDE9FE);
+    final Color chipBorder = isDark ? const Color(0xFF5B56A6) : const Color(0xFFDAD5FB);
+    final Color chipText = isDark ? const Color(0xFFCAC4FF) : const Color(0xFF4F46E5);
+
+    final List<Widget> chips = [];
+    if (kategori.isNotEmpty) {
+      chips.add(
+        Chip(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+          avatar: Icon(Icons.folder_open, size: 16, color: chipText),
+          label: Text(kategori, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: chipText)),
+          backgroundColor: chipBg,
+          shape: StadiumBorder(side: BorderSide(color: chipBorder)),
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+        ),
+      );
+    }
+
+    chips.add(
+      Chip(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+        avatar: Icon(Icons.confirmation_number, size: 16, color: chipText),
+        label: Text('Soru ${_index + 1}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: chipText)),
+        backgroundColor: isDark ? const Color(0xFF0F766E) : const Color(0xFFD1FAE5),
+        shape: StadiumBorder(side: BorderSide(color: isDark ? const Color(0xFF115E59) : const Color(0xFFA7F3D0))),
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+      ),
+    );
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: chips,
+    );
+  }
+
   Future<void> _restoreExamProgress() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -415,28 +457,11 @@ class _QuestionFlowState extends State<_QuestionFlow> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (kategori.isNotEmpty) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.blue.withOpacity(0.3)),
-                          ),
-                          child: Text(
-                            kategori,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.blue[700],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
+                      _buildMetaChips(kategori),
+                      const SizedBox(height: 10),
                       Text(
                         soru,
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
                       ),
                       if (soruResimleri.isNotEmpty) ...[
                         const SizedBox(height: 12),
@@ -568,40 +593,29 @@ class _QuestionFlowState extends State<_QuestionFlow> {
         children: [
           Text(
             metin,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
           ),
           if (resimUrl.isNotEmpty) ...[
             const SizedBox(height: 8),
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                resimUrl,
-                height: 100,
+              child: Container(
+                height: 140,
                 width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(Icons.image_not_supported, color: Colors.grey),
-                  );
-                },
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
-                },
+                color: Colors.black12,
+                alignment: Alignment.center,
+                child: Image.network(
+                  resimUrl,
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.medium,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(Icons.image_not_supported, color: Colors.grey, size: 40);
+                  },
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return const Center(child: CircularProgressIndicator());
+                  },
+                ),
               ),
             ),
           ],
@@ -634,7 +648,7 @@ class _QuestionFlowState extends State<_QuestionFlow> {
         ),
         const SizedBox(height: 8),
         SizedBox(
-          height: 120,
+          height: 220,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: validResimler.length,
@@ -645,13 +659,13 @@ class _QuestionFlowState extends State<_QuestionFlow> {
                   borderRadius: BorderRadius.circular(8),
                   child: Image.network(
                     validResimler[index].toString(),
-                    height: 120,
-                    width: 120,
+                    height: 220,
+                    width: 220,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
-                        height: 120,
-                        width: 120,
+                        height: 220,
+                        width: 220,
                         decoration: BoxDecoration(
                           color: Colors.grey[300],
                           borderRadius: BorderRadius.circular(8),
@@ -662,8 +676,8 @@ class _QuestionFlowState extends State<_QuestionFlow> {
                     loadingBuilder: (context, child, loadingProgress) {
                       if (loadingProgress == null) return child;
                       return Container(
-                        height: 120,
-                        width: 120,
+                        height: 220,
+                        width: 220,
                         decoration: BoxDecoration(
                           color: Colors.grey[300],
                           borderRadius: BorderRadius.circular(8),
@@ -696,39 +710,94 @@ class _QuestionFlowState extends State<_QuestionFlow> {
           ),
         ),
         const SizedBox(height: 8),
-        Container(
-          height: 200,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.grey[300],
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.play_circle_outline, size: 48, color: Colors.grey),
-                const SizedBox(height: 8),
-                Text(
-                  'Video: ${videoUrl.split('/').last}',
-                  style: const TextStyle(color: Colors.grey),
-                ),
-                const SizedBox(height: 8),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    // TODO: Implement video player or external link
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Video oynatma özelliği yakında eklenecek')),
-                    );
-                  },
-                  icon: const Icon(Icons.play_arrow),
-                  label: const Text('Videoyu Oynat'),
-                ),
-              ],
-            ),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: AspectRatio(
+            aspectRatio: 16 / 9,
+            child: QuestionVideoPlayer(url: videoUrl),
           ),
         ),
       ],
     );
+  }
+}
+
+class QuestionVideoPlayer extends StatefulWidget {
+  final String url;
+  const QuestionVideoPlayer({super.key, required this.url});
+
+  @override
+  State<QuestionVideoPlayer> createState() => _QuestionVideoPlayerState();
+}
+
+class _QuestionVideoPlayerState extends State<QuestionVideoPlayer> {
+  VideoPlayerController? _controller;
+  ChewieController? _chewieController;
+  bool _initTried = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    if (_initTried) return;
+    _initTried = true;
+    try {
+      final videoController = VideoPlayerController.networkUrl(Uri.parse(widget.url));
+      await videoController.initialize();
+      final chewie = ChewieController(
+        videoPlayerController: videoController,
+        autoPlay: false,
+        looping: false,
+        allowMuting: true,
+        allowFullScreen: true,
+        materialProgressColors: ChewieProgressColors(
+          playedColor: Colors.blue,
+          handleColor: Colors.blueAccent,
+          backgroundColor: Colors.black26,
+          bufferedColor: Colors.white54,
+        ),
+      );
+      if (!mounted) {
+        await videoController.dispose();
+        chewie.dispose();
+        return;
+      }
+      setState(() {
+        _controller = videoController;
+        _chewieController = chewie;
+      });
+    } catch (_) {
+      // show error UI
+      if (mounted) setState(() {});
+    }
+  }
+
+  @override
+  void dispose() {
+    _chewieController?.dispose();
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_chewieController == null || _controller == null) {
+      return Container(
+        color: Colors.black12,
+        alignment: Alignment.center,
+        child: const CircularProgressIndicator(),
+      );
+    }
+    if (!_controller!.value.isInitialized) {
+      return Container(
+        color: Colors.black12,
+        alignment: Alignment.center,
+        child: const CircularProgressIndicator(),
+      );
+    }
+    return Chewie(controller: _chewieController!);
   }
 }
