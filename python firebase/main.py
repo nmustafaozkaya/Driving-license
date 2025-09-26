@@ -4,8 +4,8 @@ import os
 import sys
 import tempfile
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor, QFont, QPalette, QPixmap
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QColor, QFont, QPalette, QPixmap, QIcon
 from PyQt6.QtWidgets import (
     QApplication,
     QComboBox,
@@ -73,6 +73,19 @@ db = initialize_firebase()
 
 # Firebase Storage bucket referansı
 bucket = None
+# Pencere referanslarını tutmak için basit bir kayıt
+OPEN_WINDOWS: list = []
+
+def keep_window(win: QWidget):
+    try:
+        OPEN_WINDOWS.append(win)
+        try:
+            win.destroyed.connect(lambda _=None, w=win: OPEN_WINDOWS.remove(w) if w in OPEN_WINDOWS else None)
+        except Exception:
+            pass
+    except Exception:
+        pass
+
 if db:
     try:
         # Projenin varsayılan bucket'ını kullan
@@ -145,6 +158,11 @@ class AnaMenu(QWidget):
         self.setWindowTitle("Soru Yönetim Sistemi - Ana Menü")
         self.setGeometry(200, 100, 1200, 700)
         self.current_panel = None
+        # Çocuk pencereleri güçlü referanslarla tut
+        self.soru_panel = None
+        self.duzenleme_panel = None
+        # Uygulama ikonu ayarla
+        self.setWindowIcon(QIcon("playstore.png"))
         self.init_ui()
     
     def init_ui(self):
@@ -247,13 +265,23 @@ class AnaMenu(QWidget):
     
     def soru_ekleme_ac(self):
         panel = SoruEklemePaneli()
+        keep_window(panel)
         panel.showFullScreen()
-        self.hide()
+        try:
+            panel.raise_(); panel.activateWindow()
+        except Exception:
+            pass
+        self.close()
     
     def duzenleme_ac(self):
-        duzenleme_panel = DuzenlemePaneli()
-        duzenleme_panel.showFullScreen()
-        self.hide()
+        panel = DuzenlemePaneli()
+        keep_window(panel)
+        panel.showFullScreen()
+        try:
+            panel.raise_(); panel.activateWindow()
+        except Exception:
+            pass
+        self.close()
     
     def show_panel(self, panel):
         """Mevcut paneli kaldır ve yeni paneli göster"""
@@ -335,6 +363,8 @@ class SoruEklemePaneli(QWidget):
         self.setWindowTitle("Soru Ekleme Paneli")
         # Landscape (yanlama) düzen için genişlik artırıldı, yükseklik azaltıldı
         self.setGeometry(50, 50, 1400, 800)
+        # Uygulama ikonu ayarla
+        self.setWindowIcon(QIcon("playstore.png"))
         self.init_ui()
         
     def init_ui(self):
@@ -1408,13 +1438,68 @@ class SoruEklemePaneli(QWidget):
             QMessageBox.information(self, "🧹 Temizlendi", "Form başarıyla temizlendi!")
 
 class SoruDuzenlemePaneli(SoruEklemePaneli):
-    def __init__(self, doc_id: str):
+    def __init__(self, doc_id: str, initial_data: dict | None = None):
         self.doc_id = doc_id
+        # Önce tarih bilgisini sakla (geri dönüşte kullanacağız)
+        self.prev_gun = None
+        self.prev_ay = None
+        self.prev_yil = None
+        if isinstance(initial_data, dict):
+            self.prev_gun = str(initial_data.get("gün") or initial_data.get("gun") or "").strip()
+            self.prev_ay = str(initial_data.get("ay") or "").strip()
+            self.prev_yil = str(initial_data.get("yıl") or initial_data.get("yil") or "").strip()
         super().__init__()
         self.setWindowTitle("Soru Düzenleme Paneli")
+        # Uygulama ikonu ayarla
+        self.setWindowIcon(QIcon("playstore.png"))
+        # Üst bar: Geri butonu ekle, "Ana Menü" ve "Tarih Seç" butonlarını gösterme
+        try:
+            header_layout = self.layout().itemAt(0).layout()  # SoruEklemePaneli'ndeki header_layout
+            if header_layout is not None:
+                geri_btn2 = QPushButton("⬅️ Geri")
+                geri_btn2.setObjectName("secondaryBtn")
+                geri_btn2.clicked.connect(self.geri)
+                header_layout.insertWidget(0, geri_btn2)
+                # Var olan "Ana Menü" butonunu gizle
+                try:
+                    for i in range(header_layout.count()):
+                        w = header_layout.itemAt(i).widget()
+                        if hasattr(w, 'text') and isinstance(w.text(), str) and "Ana Menü" in w.text():
+                            w.hide()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        # Başlık metnini "Soru Düzenleme Paneli" yap
+        try:
+            main_layout = self.layout()
+            if main_layout is not None:
+                # Başlık QLabel'i genelde 1. indexte
+                maybe_lbl_item = main_layout.itemAt(1)
+                if maybe_lbl_item and maybe_lbl_item.widget() and isinstance(maybe_lbl_item.widget(), QLabel):
+                    maybe_lbl_item.widget().setText("🛠️ SORU DÜZENLEME PANELİ")
+                else:
+                    # Fallback: tüm alt widget'larda arayıp metni değiştir
+                    for i in range(main_layout.count()):
+                        it = main_layout.itemAt(i)
+                        w = it.widget()
+                        if isinstance(w, QLabel) and "SORU EKLEME" in w.text():
+                            w.setText("🛠️ SORU DÜZENLEME PANELİ")
+                            break
+        except Exception:
+            pass
+
+        # Ön doldurma (liste satırındaki mevcut verilerle)
+        if isinstance(initial_data, dict) and initial_data:
+            try:
+                self._uygula_belge(initial_data)
+            except Exception:
+                pass
         self.yukle_ve_doldur()
 
     def yukle_ve_doldur(self):
+        # Belgeyi senkron çek ve hemen doldur (ekran boş açılmasın)
         try:
             ref = db.collection("sorular").document(self.doc_id)
             snap = ref.get()
@@ -1422,52 +1507,128 @@ class SoruDuzenlemePaneli(SoruEklemePaneli):
                 QMessageBox.critical(self, "Hata", "Belge bulunamadı")
                 return
             d = snap.to_dict() or {}
-            # Soru
-            self.soru_input.setPlainText(str(d.get("soru", "")))
-            # Cevaplar
-            cevaplar = d.get("cevaplar", [])
-            for i in range(min(4, len(self.cevap_inputs))):
-                metin = ""
-                if isinstance(cevaplar, list) and len(cevaplar) > i:
-                    c = cevaplar[i]
-                    if isinstance(c, dict):
-                        metin = c.get("metin", "")
-                self.cevap_inputs[i].setText(str(metin))
-            # Cevap resimleri
-            for i in range(min(4, len(self.cevap_resim_inputs))):
-                url = ""
-                if isinstance(cevaplar, list) and len(cevaplar) > i:
-                    c = cevaplar[i]
-                    if isinstance(c, dict):
-                        url = c.get("resim_url", "")
-                self.cevap_resim_inputs[i].setText(str(url))
-            # Doğru cevap
-            self.dogru_combo.setCurrentIndex(int(d.get("cevap", 0)))
-            # Tarihler
             try:
-                gun_val = int(d.get("gün", 1))
+                print(f"[SoruDuzenlemePaneli] Belge yüklendi, doc_id={self.doc_id}, alanlar={list(d.keys())}")
             except Exception:
-                gun_val = 1
-            self.gun_combo.setCurrentText(str(gun_val))
-            self.ay_combo.setCurrentText(str(d.get("ay", "Ocak")))
-            self.yil_combo.setCurrentText(str(d.get("yıl", "2024")))
-            # Kategori - Seçilen kategoriyi butonlarda işaretle
-            kategori_text = str(d.get("kategori", "Genel"))
-            self.secili_kategori = None
-            for i, kategori in enumerate(self.kategoriler):
-                if kategori == kategori_text:
-                    self.kategori_butonlari[i].setChecked(True)
-                    self.secili_kategori = i
-                    break
-            # Soru resimleri
-            soru_resimleri = d.get("soru_resimleri", [])
-            if isinstance(soru_resimleri, list):
-                for i in range(min(4, len(self.soru_resim_inputs))):
-                    self.soru_resim_inputs[i].setText(str(soru_resimleri[i] if i < len(soru_resimleri) else ""))
-            # Video
-            self.video_input.setText(str(d.get("soru_videosu", "")))
+                pass
+            self._uygula_belge(d)
         except Exception as e:
+            try:
+                print(f"[SoruDuzenlemePaneli] Belge yüklenemedi, doc_id={self.doc_id}, hata={e}")
+            except Exception:
+                pass
             QMessageBox.critical(self, "Hata", f"Belge yüklenemedi: {e}")
+
+    def _uygula_belge(self, d: dict):
+        # Yardımcı: çoklu anahtar oku
+        def get_any(data: dict, keys: list[str], default=""):
+            for k in keys:
+                if k in data and data.get(k) not in (None, ""):
+                    return data.get(k)
+            return default
+
+        # Soru
+        soru_text = get_any(d, ["soru", "soru_text", "question"], "")
+        self.soru_input.setPlainText(str(soru_text))
+        # Cevaplar
+        cevaplar = d.get("cevaplar", [])
+        # Eğer dict ise A-D sırala
+        if isinstance(cevaplar, dict):
+            order_keys = ["A", "B", "C", "D", "a", "b", "c", "d", "1", "2", "3", "4"]
+            tmp = []
+            for k in ["A","B","C","D"]:
+                if k in cevaplar:
+                    tmp.append(cevaplar.get(k))
+            if not tmp:
+                for k in ["a","b","c","d"]:
+                    if k in cevaplar:
+                        tmp.append(cevaplar.get(k))
+            if not tmp:
+                for k in ["1","2","3","4"]:
+                    if k in cevaplar:
+                        tmp.append(cevaplar.get(k))
+            cevaplar = tmp
+        # Eski/diger şema: cevap1-4 veya a-d
+        if not cevaplar:
+            alt_keys = [
+                ("cevap1","cevap2","cevap3","cevap4"),
+                ("A","B","C","D"),
+                ("a","b","c","d"),
+            ]
+            for keys in alt_keys:
+                vals = [str(d.get(k, "")).strip() for k in keys]
+                if any(vals):
+                    cevaplar = vals
+                    break
+        for i in range(min(4, len(self.cevap_inputs))):
+            metin = ""
+            if isinstance(cevaplar, list) and len(cevaplar) > i:
+                c = cevaplar[i]
+                if isinstance(c, dict):
+                    metin = c.get("metin", "")
+                elif isinstance(c, str):
+                    metin = c
+            self.cevap_inputs[i].setText(str(metin))
+        # Cevap resimleri
+        for i in range(min(4, len(self.cevap_resim_inputs))):
+            url = ""
+            if isinstance(cevaplar, list) and len(cevaplar) > i:
+                c = cevaplar[i]
+                if isinstance(c, dict):
+                    url = c.get("resim_url", "")
+            self.cevap_resim_inputs[i].setText(str(url))
+        # Doğru cevap
+        try:
+            idx = get_any(d, ["cevap", "dogru", "correct", "answer", "right"], None)
+            # Bazı eski şemalarda 1-4 olabilir
+            if isinstance(idx, int) and 1 <= idx <= 4:
+                idx = idx - 1
+            if isinstance(idx, str) and idx.isdigit():
+                v = int(idx)
+                idx = v-1 if 1 <= v <= 4 else v
+            idx = int(idx) if idx is not None else 0
+            if idx < 0 or idx > 3:
+                idx = 0
+            self.dogru_combo.setCurrentIndex(idx)
+        except Exception:
+            self.dogru_combo.setCurrentIndex(0)
+        # Tarihler
+        try:
+            gun_val = int(get_any(d, ["gün", "gun", "day"], 1))
+        except Exception:
+            gun_val = 1
+        self.gun_combo.setCurrentText(str(gun_val))
+        # Ay string veya int olabilir
+        ay_val = get_any(d, ["ay", "month"], "Ocak")
+        if isinstance(ay_val, int):
+            ay_map = ["", "Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"]
+            if 1 <= ay_val <= 12:
+                ay_val = ay_map[ay_val]
+            else:
+                ay_val = "Ocak"
+        self.ay_combo.setCurrentText(str(ay_val))
+        self.yil_combo.setCurrentText(str(get_any(d, ["yıl", "yil", "year"], "2024")))
+        # Kategori (varsa) işaretle
+        kategori_text = str(get_any(d, ["kategori", "category"], "Genel"))
+        self.secili_kategori = None
+        for i, kategori in enumerate(self.kategoriler):
+            if kategori == kategori_text:
+                self.kategori_butonlari[i].setChecked(True)
+                self.secili_kategori = i
+                break
+        # Soru resimleri
+        soru_resimleri = d.get("soru_resimleri", [])
+        # Eski şema için geri dönüşüm: tekil resim alanları
+        if not soru_resimleri:
+            legacy_img = d.get("resim_url", "") or d.get("resim", "")
+            if legacy_img:
+                soru_resimleri = [legacy_img]
+        if isinstance(soru_resimleri, list):
+            for i in range(min(4, len(self.soru_resim_inputs))):
+                self.soru_resim_inputs[i].setText(str(soru_resimleri[i] if i < len(soru_resimleri) else ""))
+        # Video
+        video_val = d.get("soru_videosu", "") or d.get("video_url", "") or d.get("video", "")
+        self.video_input.setText(str(video_val))
 
     def soru_kaydet(self):
         if not db:
@@ -1516,24 +1677,106 @@ class SoruDuzenlemePaneli(SoruEklemePaneli):
             # Güncelle
             db.collection("sorular").document(self.doc_id).set(soru_veri, merge=False)
             QMessageBox.information(self, "Başarılı", "Soru güncellendi.")
-            # Düzenleme sonrası listeye dön
-            self.ana_menuye_don()
+            # Düzenleme sonrası geri dön
+            self.geri()
         except Exception as e:
             import traceback
             error_msg = f"Soru güncellenirken hata oluştu:\n{str(e)}\n\nDetay: {traceback.format_exc()}"
             QMessageBox.critical(self, "❌ Hata", error_msg)
+
+    def geri(self):
+        try:
+            # Önce aynı tarihin liste ekranına dönmeye çalış
+            if self.prev_gun and self.prev_ay and self.prev_yil:
+                p = SoruListePenceresi(self.prev_gun, self.prev_ay, self.prev_yil)
+                try:
+                    p.showFullScreen()
+                except Exception:
+                    p.showMaximized()
+                try:
+                    p.raise_(); p.activateWindow()
+                except Exception:
+                    pass
+                self.close()
+                return
+        except Exception:
+            pass
+        # Tarih seçme ekranına dön
+        try:
+            d = DuzenlemePaneli()
+            try:
+                d.show()
+            except Exception:
+                pass
+            try:
+                d.raise_(); d.activateWindow()
+            except Exception:
+                pass
+            self.close()
+        except Exception:
+            self.close()
+
+    def tarih_sec_ekrani(self):
+        # Tercih: doğrudan soru listesine dön (seçili tarihle)
+        try:
+            if self.prev_gun and self.prev_ay and self.prev_yil:
+                p = SoruListePenceresi(self.prev_gun, self.prev_ay, self.prev_yil)
+                try:
+                    p.showFullScreen()
+                except Exception:
+                    p.showMaximized()
+                try:
+                    p.raise_(); p.activateWindow()
+                except Exception:
+                    pass
+                self.close()
+                return
+        except Exception:
+            pass
+        # Yedek: tarih seçim ekranına dön
+        try:
+            d = DuzenlemePaneli()
+            try:
+                d.show()
+            except Exception:
+                pass
+            try:
+                d.raise_(); d.activateWindow()
+            except Exception:
+                pass
+            self.close()
+        except Exception:
+            self.close()
+
+    # Düzenleme ekranındaki "Ana Menü" butonunu tarih akışına yönlendir
+    def ana_menuye_don(self):
+        try:
+            m = AnaMenu()
+            m.show()
+            try:
+                m.raise_(); m.activateWindow()
+            except Exception:
+                pass
+            self.close()
+        except Exception:
+            self.close()
 
 class DuzenlemePaneli(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Düzenleme - Sorular")
         self.setGeometry(150, 80, 1200, 700)
+        # Açılan pencereleri referans olarak tut
+        self.liste_penceresi = None
+        self.edit_panel = None
+        # Uygulama ikonu ayarla
+        self.setWindowIcon(QIcon("playstore.png"))
         self.init_ui()
         
     def init_ui(self):
         layout = QVBoxLayout()
 
-        baslik = QLabel("📋 Mevcut Soruları Düzenleyin ve Silin")
+        baslik = QLabel("📋 Tarih Seçin")
         baslik.setAlignment(Qt.AlignmentFlag.AlignCenter)
         baslik.setStyleSheet("font-size: 22px; font-weight: bold; color:#ffffff; background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #dc3545, stop:1 #c82333); padding: 10px; border: 2px solid #bd2130; border-radius: 8px;")
         layout.addWidget(baslik)
@@ -1597,6 +1840,12 @@ class DuzenlemePaneli(QWidget):
 
         layout.addLayout(top_bar)
 
+        # Seçilen tarih - üst bilgi
+        self.secilen_tarih_label = QLabel("")
+        self.secilen_tarih_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.secilen_tarih_label.setStyleSheet("color:#2d5a27; font-size:13px; padding:6px; font-weight:bold;")
+        layout.addWidget(self.secilen_tarih_label)
+
         # Durum etiketi
         self.status_label = QLabel("")
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -1651,7 +1900,12 @@ class DuzenlemePaneli(QWidget):
             pass
         try:
             m = AnaMenu()
+            keep_window(m)
             m.show()
+            try:
+                m.raise_(); m.activateWindow()
+            except Exception:
+                pass
             self.close()
         except Exception:
             pass
@@ -1727,21 +1981,24 @@ class DuzenlemePaneli(QWidget):
             print(f"Tarihler yüklenirken hata: {e}")
     
     def tarih_sec(self, tarih_str):
-        """Seçilen tarihi ayır ve soruları yükle"""
-        # Tarih string'ini parçala
+        """Seçilen tarihi ayır ve kayıtlar ekranını aç"""
         parts = tarih_str.split()
         if len(parts) >= 3:
             gun = parts[0]
             ay = parts[1]
             yil = parts[2]
-            
-            # Bu tarihteki soruları yeni pencerede aç
             try:
-                pencere = SoruListePenceresi(gun, ay, yil)
-                pencere.showFullScreen()
+                p = SoruListePenceresi(gun, ay, yil)
+                try:
+                    p.showFullScreen()
+                except Exception:
+                    p.showMaximized()
+                try:
+                    p.raise_(); p.activateWindow()
+                except Exception:
+                    pass
                 self.close()
             except Exception:
-                # Hata halinde eski davranışa düş
                 self.load_rows_by_date(gun, ay, yil)
     
     def load_gunler(self):
@@ -1889,16 +2146,25 @@ class DuzenlemePaneli(QWidget):
             print(f"Tarih seçenekleri yüklenirken hata: {e}")
     
     def tarih_sec(self, tarih_str):
-        """Seçilen tarihi ayır ve soruları yükle"""
-        # Tarih string'ini parçala
+        """Seçilen tarihi ayır ve kayıtlar ekranını aç"""
         parts = tarih_str.split()
         if len(parts) >= 3:
             gun = parts[0]
             ay = parts[1]
             yil = parts[2]
-            
-            # Bu tarihteki soruları yükle
-            self.load_rows_by_date(gun, ay, yil)
+            try:
+                p = SoruListePenceresi(gun, ay, yil)
+                try:
+                    p.showFullScreen()
+                except Exception:
+                    p.showMaximized()
+                try:
+                    p.raise_(); p.activateWindow()
+                except Exception:
+                    pass
+                self.close()
+            except Exception:
+                self.load_rows_by_date(gun, ay, yil)
     
     def load_rows_by_date(self, gun, ay, yil):
         """Belirli bir tarihteki soruları yükler"""
@@ -1909,6 +2175,39 @@ class DuzenlemePaneli(QWidget):
             return
         
         try:
+            # Üst bilgi: seçilen tarih
+            try:
+                self.secilen_tarih_label.setText(f"Seçilen Tarih: {gun} {ay} {yil}")
+            except Exception:
+                pass
+            # Yerel açıcı: doğrudan düzenleme penceresini aç
+            def _open_edit_local(doc_id: str, preload: dict | None = None):
+                try:
+                    try:
+                        print(f"[DuzenlemePaneli] DÜZENLE tıklandı, doc_id={doc_id}, preload_keys={(list(preload.keys()) if isinstance(preload, dict) else [])}")
+                    except Exception:
+                        pass
+                    try:
+                        QMessageBox.information(self, "DÜZENLE", f"doc_id: {doc_id}\nSoru önizleme: {str((preload or {}).get('soru',''))[:60]}")
+                    except Exception:
+                        pass
+                    self.edit_panel = SoruDuzenlemePaneli(doc_id, initial_data=preload)
+                    try:
+                        self.edit_panel.destroyed.connect(lambda _=None: self.show())
+                    except Exception:
+                        pass
+                    try:
+                        self.edit_panel.showFullScreen()
+                    except Exception:
+                        self.edit_panel.showMaximized()
+                    try:
+                        self.edit_panel.raise_(); self.edit_panel.activateWindow()
+                    except Exception:
+                        pass
+                    self.hide()
+                except Exception as e:
+                    QMessageBox.critical(self, "Hata", f"Düzenleme ekranı açılamadı: {e}")
+
             # Eski satırları temizle
             self.table.setRowCount(0)
             # Satır -> belge ID eşlemesi
@@ -1965,18 +2264,31 @@ class DuzenlemePaneli(QWidget):
                 # Düzenle butonu
                 edit_btn = QPushButton("DÜZENLE")
                 edit_btn.setStyleSheet(
-                    "QPushButton{background:#0d6efd; color:#ffffff; font-weight:bold; padding:4px 12px 10px 12px; border:1px solid #0b5ed7; border-radius:0px;}"
+                    "QPushButton{background:#0d6efd; color:#ffffff; font-weight:bold; padding:0px; border:1px solid #0b5ed7; border-radius:0px;}"
                     " QPushButton:hover{background:#3b82f6; color:#ffffff;}"
                     " QPushButton:pressed{background:#0b5ed7; color:#ffffff;}"
                 )
+                try:
+                    from PyQt6.QtWidgets import QSizePolicy as _QSizePolicy
+                    edit_btn.setSizePolicy(_QSizePolicy.Policy.Expanding, _QSizePolicy.Policy.Expanding)
+                    edit_btn.setMinimumHeight(1)
+                except Exception:
+                    pass
                 edit_btn.setAutoDefault(False)
                 edit_btn.setDefault(False)
-                edit_btn.setMinimumHeight(30)
-                from PyQt6.QtWidgets import QSizePolicy as _QSizePolicy
-                edit_btn.setSizePolicy(_QSizePolicy.Policy.Expanding, _QSizePolicy.Policy.Expanding)
-                def _make_edit(doc_id: str):
-                    return lambda: self.open_edit_panel(doc_id)
-                edit_btn.clicked.connect(_make_edit(item["id"]))
+                # satır verilerini önceden panele geçir (hızlı dolum için)
+                preload = {
+                    "soru": item.get("soru", ""),
+                    "gün": item.get("gun", 0),
+                    "ay": item.get("ay", "Ocak"),
+                    "yıl": item.get("yil", 2024),
+                    "kategori": item.get("kategori", "Genel"),
+                    "cevaplar": item.get("cevaplar", []),
+                    "cevap": (item.get("dogru", 1) - 1) if isinstance(item.get("dogru"), int) else item.get("dogru"),
+                    "soru_resimleri": item.get("soru_resimleri", []),
+                    "soru_videosu": item.get("video_url", ""),
+                }
+                edit_btn.clicked.connect(lambda _=False, did=item["id"], data=preload: _open_edit_local(did, data))
                 edit_widget = QWidget()
                 edit_layout = _QHBox()
                 edit_layout.setContentsMargins(0,0,0,0)
@@ -2021,6 +2333,12 @@ class SoruListePenceresi(QWidget):
         self.gun = gun
         self.ay = ay
         self.yil = yil
+        # Açılan düzenleme panelini tut
+        self.edit_panel = None
+        # Satır önbelleği: doc_id -> veri (ön doldurma için)
+        self.rows_cache = {}
+        # Uygulama ikonu ayarla
+        self.setWindowIcon(QIcon("playstore.png"))
         self.init_ui()
 
     def init_ui(self):
@@ -2043,8 +2361,8 @@ class SoruListePenceresi(QWidget):
 
         # Tablo
         self.table = QTableWidget()
-        self.table.setColumnCount(5)
-        self.table.setHorizontalHeaderLabels(["Düzenle", "Soru", "Gün", "Ay", "Yıl"])
+        self.table.setColumnCount(6)
+        self.table.setHorizontalHeaderLabels(["Düzenle", "Sil", "Soru", "Gün", "Ay", "Yıl"])
         self.table.setStyleSheet(
             "QTableWidget { font-size: 13px; background:white; gridline-color:#cfe3cf; }"
             "QHeaderView::section { background:#4a934a; color:white; padding:6px; border:0px; }"
@@ -2053,25 +2371,29 @@ class SoruListePenceresi(QWidget):
         )
         self.table.verticalHeader().setVisible(False)
         self.table.horizontalHeader().setStretchLastSection(False)
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
-        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Fixed)
-        self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)
-        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)
-        self.table.setColumnWidth(0, 120)
-        self.table.setColumnWidth(2, 70)
-        self.table.setColumnWidth(3, 90)
-        self.table.setColumnWidth(4, 70)
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)  # Düzenle
+        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Fixed)  # Sil
+        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch) # Soru
+        self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)   # Gün
+        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)   # Ay
+        self.table.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeMode.Fixed)   # Yıl
+        self.table.setColumnWidth(0, 110)
+        self.table.setColumnWidth(1, 90)
+        self.table.setColumnWidth(3, 70)
+        self.table.setColumnWidth(4, 90)
+        self.table.setColumnWidth(5, 70)
         layout.addWidget(self.table)
 
-        # Alt bar
-        bottom = QHBoxLayout()
-        ana_menu_btn = QPushButton("🏠 Ana Menü")
-        ana_menu_btn.setStyleSheet("QPushButton{background:#6c757d; color:white; font-weight:bold; padding:8px 14px; border:1px solid #495057; border-radius:6px;} QPushButton:hover{background:#5a6268}")
-        ana_menu_btn.clicked.connect(self.ana_menu)
-        bottom.addWidget(ana_menu_btn)
-        bottom.addStretch()
-        layout.addLayout(bottom)
+        # Durum etiketi (kayıt sayısı vb.)
+        self.status_label = QLabel("")
+        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        try:
+            self.status_label.setStyleSheet("color:#2d5a27; font-size:12px; padding:6px;")
+        except Exception:
+            pass
+        layout.addWidget(self.status_label)
+
+        # Alt bar kaldırıldı (Ana Menü yok)
 
         self.setLayout(layout)
 
@@ -2086,6 +2408,7 @@ class SoruListePenceresi(QWidget):
         try:
             self.table.setRowCount(0)
             self.row_ids: list[str] = []
+            self.rows_cache = {}
 
             def parse_int(val: object) -> int:
                 if isinstance(val, int):
@@ -2103,13 +2426,22 @@ class SoruListePenceresi(QWidget):
                 ay_name = d.get("ay")
                 gun_val = parse_int(d.get("gün"))
                 if (str(gun_val) == self.gun and ay_name == self.ay and str(yil_val) == self.yil):
-                    rows.append({
+                    row_obj = {
                         "id": s.id,
                         "soru": d.get("soru", ""),
                         "gun": gun_val,
                         "ay": ay_name,
                         "yil": yil_val,
-                    })
+                        "kategori": d.get("kategori", "Genel"),
+                        "cevaplar": d.get("cevaplar", []),
+                        "cevap": d.get("cevap"),
+                        "dogru": d.get("cevap"),
+                        "soru_resimleri": d.get("soru_resimleri", []),
+                        "soru_videosu": d.get("soru_videosu", ""),
+                        "video_url": d.get("video_url", "")
+                    }
+                    rows.append(row_obj)
+                    self.rows_cache[s.id] = row_obj
 
             from PyQt6.QtWidgets import QTableWidgetItem
             self.table.setRowCount(len(rows))
@@ -2117,7 +2449,7 @@ class SoruListePenceresi(QWidget):
                 self.row_ids.append(item["id"]) 
                 edit_btn = QPushButton("DÜZENLE")
                 edit_btn.setStyleSheet(
-                    "QPushButton{background:#0d6efd; color:#ffffff; font-weight:bold; padding:4px 12px 10px 12px; border:1px solid #0b5ed7; border-radius:0px;}"
+                    "QPushButton{background:#0d6efd; color:#ffffff; font-weight:bold; padding:0px; border:1px solid #0b5ed7; border-radius:0px;}"
                     " QPushButton:hover{background:#3b82f6; color:#ffffff;}"
                     " QPushButton:pressed{background:#0b5ed7; color:#ffffff;}"
                 )
@@ -2128,14 +2460,42 @@ class SoruListePenceresi(QWidget):
                 w = _QW()
                 h = _QHBox()
                 h.setContentsMargins(0,0,0,0)
+                h.setSpacing(0)
+                h.setSpacing(0)
                 h.addWidget(edit_btn)
                 w.setLayout(h)
+                try:
+                    w.setContentsMargins(0,0,0,0)
+                except Exception:
+                    pass
                 self.table.setCellWidget(r, 0, w)
 
-                self.table.setItem(r, 1, QTableWidgetItem(item["soru"]))
-                self.table.setItem(r, 2, QTableWidgetItem(str(item["gun"])))
-                self.table.setItem(r, 3, QTableWidgetItem(item["ay"]))
-                self.table.setItem(r, 4, QTableWidgetItem(str(item["yil"])))
+                # Sil butonu
+                del_btn = QPushButton("SİL")
+                del_btn.setStyleSheet(
+                    "QPushButton{background:#dc3545; color:#ffffff; font-weight:bold; padding:0px; border:1px solid #bd2130; border-radius:0px;}"
+                    " QPushButton:hover{background:#e55362;}"
+                    " QPushButton:pressed{background:#bd2130;}"
+                )
+                try:
+                    from PyQt6.QtWidgets import QSizePolicy as _QSizePolicy
+                    del_btn.setSizePolicy(_QSizePolicy.Policy.Expanding, _QSizePolicy.Policy.Expanding)
+                    del_btn.setMinimumHeight(1)
+                except Exception:
+                    pass
+                # Silmeden önce onay iste
+                del_btn.clicked.connect(lambda _=False, did=item["id"], row=r: self._confirm_and_delete(did, row))
+                w2 = _QW(); h2 = _QHBox(); h2.setContentsMargins(0,0,0,0); h2.setSpacing(0); h2.addWidget(del_btn); w2.setLayout(h2)
+                try:
+                    w2.setContentsMargins(0,0,0,0)
+                except Exception:
+                    pass
+                self.table.setCellWidget(r, 1, w2)
+
+                self.table.setItem(r, 2, QTableWidgetItem(item["soru"]))
+                self.table.setItem(r, 3, QTableWidgetItem(str(item["gun"])))
+                self.table.setItem(r, 4, QTableWidgetItem(item["ay"]))
+                self.table.setItem(r, 5, QTableWidgetItem(str(item["yil"])))
             self.table.resizeRowsToContents()
         except Exception as e:
             import traceback
@@ -2144,11 +2504,86 @@ class SoruListePenceresi(QWidget):
 
     def open_edit_panel(self, doc_id: str):
         try:
-            panel = SoruDuzenlemePaneli(doc_id)
-            panel.showFullScreen()
-            self.close()
+            preload = self.rows_cache.get(doc_id, {})
+            try:
+                print(f"[SoruListePenceresi] DÜZENLE tıklandı, doc_id={doc_id}, preload_keys={list(preload.keys())}")
+            except Exception:
+                pass
+            try:
+                QMessageBox.information(self, "DÜZENLE", f"doc_id: {doc_id}\nSoru önizleme: {str(preload.get('soru',''))[:60]}")
+            except Exception:
+                pass
+            self.edit_panel = SoruDuzenlemePaneli(doc_id, initial_data=preload)
+            # Çocuk kapanınca bu pencereyi geri göster
+            try:
+                self.edit_panel.destroyed.connect(lambda _=None: self.show())
+            except Exception:
+                pass
+            try:
+                self.edit_panel.showFullScreen()
+            except Exception:
+                self.edit_panel.showMaximized()
+            try:
+                self.edit_panel.raise_(); self.edit_panel.activateWindow()
+            except Exception:
+                pass
+            self.hide()
         except Exception as e:
             QMessageBox.critical(self, "Hata", f"Düzenleme ekranı açılamadı: {e}")
+
+    def _confirm_and_delete(self, doc_id: str, row_index: int):
+        try:
+            reply = QMessageBox.question(
+                self,
+                "Sil",
+                "Bu kaydı silmek istediğinizden emin misiniz?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
+            )
+            if reply != QMessageBox.StandardButton.Yes:
+                return
+            # Firestore'dan sil
+            db.collection("sorular").document(doc_id).delete()
+            # Son kayıt mı? Evetse Düzenleme ana sayfasına dön
+            try:
+                remaining = self.table.rowCount() - 1
+            except Exception:
+                remaining = 0
+            if remaining <= 0:
+                try:
+                    d = DuzenlemePaneli()
+                    keep_window(d)
+                    try:
+                        d.showMaximized()
+                    except Exception:
+                        d.show()
+                    try:
+                        d.raise_(); d.activateWindow()
+                    except Exception:
+                        pass
+                    self.close()
+                    return
+                except Exception:
+                    pass
+            # Aksi halde seçili tarihin kayıtlarına yeniden git (pencere açık kalsın)
+            try:
+                p = SoruListePenceresi(self.gun, self.ay, self.yil)
+                keep_window(p)
+                try:
+                    p.showFullScreen()
+                except Exception:
+                    p.showMaximized()
+                try:
+                    p.raise_(); p.activateWindow()
+                except Exception:
+                    pass
+                self.close()
+            except Exception:
+                # En azından satırı kaldırmayı dene
+                if 0 <= row_index < self.table.rowCount():
+                    self.table.removeRow(row_index)
+        except Exception as e:
+            QMessageBox.critical(self, "Hata", f"Silinemedi: {e}")
 
     def geri(self):
         try:
@@ -2168,32 +2603,14 @@ class SoruListePenceresi(QWidget):
     
     def load_rows(self):
         from PyQt6.QtWidgets import QPushButton
-        from functools import partial
         if not db:
             QMessageBox.warning(self, "Hata", "Veritabanı bağlantısı yok!")
             return
         try:
-            # Eski satırları temizle
             self.table.setRowCount(0)
-            # Satır -> belge ID eşlemesi
             self.row_ids: list[str] = []
-            # Tüm belgeleri çek
-            try:
-                q = db.collection("sorular")
-                sorular = q.stream()
-            except Exception as e:
-                QMessageBox.critical(self, "Hata", f"Firebase bağlantı hatası: {e}")
-                return
-
-            def month_to_name(val: object) -> str:
-                months = ["", "Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"]
-                if isinstance(val, int):
-                    if 1 <= val <= 12:
-                        return months[val]
-                    return ""
-                if isinstance(val, str):
-                    return val
-                return ""
+            q = db.collection("sorular")
+            sorular = q.stream()
 
             def parse_int(val: object) -> int:
                 if isinstance(val, int):
@@ -2202,82 +2619,53 @@ class SoruListePenceresi(QWidget):
                     return int(val)
                 return 0
 
-            # Önce tüm kayıtları yükle
-            all_rows = []
+            rows = []
             for s in sorular:
                 d = s.to_dict() or {}
                 yil_val = parse_int(d.get("yıl"))
-                ay_name = month_to_name(d.get("ay"))
+                ay_name = d.get("ay")
                 gun_val = parse_int(d.get("gün"))
-                kategori = d.get("kategori", "Genel")
+                if (str(gun_val) == self.gun and ay_name == self.ay and str(yil_val) == self.yil):
+                    rows.append({
+                        "id": s.id,
+                        "soru": d.get("soru", ""),
+                        "gun": gun_val,
+                        "ay": ay_name,
+                        "yil": yil_val,
+                    })
 
-                all_rows.append({
-                    "id": s.id,
-                    "kategori": kategori,
-                    "soru": d.get("soru", ""),
-                    "cevaplar": d.get("cevaplar", []),
-                    "dogru": (parse_int(d.get("cevap")) + 1),
-                    "gun": gun_val,
-                    "ay": ay_name,
-                    "yil": yil_val,
-                    "resim_url": d.get("resim_url", "") or d.get("resim", "") or "",
-                    "video_url": d.get("video_url", "") or d.get("video", "") or ""
-                })
-
-            # Tüm soruları göster (filtreleme yok)
-            rows = all_rows
-            total_docs = len(all_rows)
-
-            self.table.setRowCount(len(rows))
-            from PyQt6.QtWidgets import QTableWidgetItem, QCheckBox, QWidget, QPushButton
+            from PyQt6.QtWidgets import QTableWidgetItem, QWidget
             from PyQt6.QtWidgets import QHBoxLayout as _QHBox
+            self.table.setRowCount(len(rows))
             for r, item in enumerate(rows):
-                # Eşlemeyi sakla (ID görünmeyecek)
                 self.row_ids.append(item["id"]) 
-
-                # Düzenle butonu
+                # Düzenle
                 edit_btn = QPushButton("DÜZENLE")
                 edit_btn.setStyleSheet(
-                    "QPushButton{background:#0d6efd; color:#ffffff; font-weight:bold; padding:4px 12px 10px 12px; border:1px solid #0b5ed7; border-radius:0px;}"
+                    "QPushButton{background:#0d6efd; color:#ffffff; font-weight:bold; padding:0px; border:1px solid #0b5ed7; border-radius:0px;}"
                     " QPushButton:hover{background:#3b82f6; color:#ffffff;}"
                     " QPushButton:pressed{background:#0b5ed7; color:#ffffff;}"
                 )
-                edit_btn.setAutoDefault(False)
-                edit_btn.setDefault(False)
-                edit_btn.setMinimumHeight(30)
-                from PyQt6.QtWidgets import QSizePolicy as _QSizePolicy
-                edit_btn.setSizePolicy(_QSizePolicy.Policy.Expanding, _QSizePolicy.Policy.Expanding)
-                def _make_edit(doc_id: str):
-                    return lambda: self.open_edit_panel(doc_id)
-                edit_btn.clicked.connect(_make_edit(item["id"]))
-                edit_widget = QWidget()
-                edit_layout = _QHBox()
-                edit_layout.setContentsMargins(0,0,0,0)
-                edit_layout.setSpacing(0)
-                edit_layout.addWidget(edit_btn)
-                edit_widget.setLayout(edit_layout)
-                self.table.setCellWidget(r, 0, edit_widget)
+                edit_btn.clicked.connect(lambda _=False, did=item["id"]: self.open_edit_panel(did))
+                w = QWidget(); h = _QHBox(); h.setContentsMargins(0,0,0,0); h.setSpacing(0); h.addWidget(edit_btn); w.setLayout(h)
+                self.table.setCellWidget(r, 0, w)
 
-                soru_item = QTableWidgetItem(item["soru"])      # 1
-                gun_item = QTableWidgetItem(str(item["gun"]))   # 2
-                ay_item = QTableWidgetItem(item["ay"])          # 3
-                yil_item = QTableWidgetItem(str(item["yil"]))   # 4
+                # Sil
+                del_btn = QPushButton("SİL")
+                del_btn.setStyleSheet(
+                    "QPushButton{background:#dc3545; color:#ffffff; font-weight:bold; padding:0px; border:1px solid #bd2130; border-radius:0px;}"
+                    " QPushButton:hover{background:#e55362;}"
+                    " QPushButton:pressed{background:#bd2130;}"
+                )
+                del_btn.clicked.connect(lambda _=False, did=item["id"], row=r: self._confirm_and_delete(did, row))
+                w2 = QWidget(); h2 = _QHBox(); h2.setContentsMargins(0,0,0,0); h2.setSpacing(0); h2.addWidget(del_btn); w2.setLayout(h2)
+                self.table.setCellWidget(r, 1, w2)
 
-                # Hizalar
-                soru_item.setTextAlignment(int(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter))
-                gun_item.setTextAlignment(int(Qt.AlignmentFlag.AlignCenter))
-                ay_item.setTextAlignment(int(Qt.AlignmentFlag.AlignCenter))
-                yil_item.setTextAlignment(int(Qt.AlignmentFlag.AlignCenter))
-
-                self.table.setItem(r, 1, soru_item)
-                self.table.setItem(r, 2, gun_item)
-                self.table.setItem(r, 3, ay_item)
-                self.table.setItem(r, 4, yil_item)
+                self.table.setItem(r, 2, QTableWidgetItem(item["soru"]))
+                self.table.setItem(r, 3, QTableWidgetItem(str(item["gun"])))
+                self.table.setItem(r, 4, QTableWidgetItem(item["ay"]))
+                self.table.setItem(r, 5, QTableWidgetItem(str(item["yil"])))
             self.table.resizeRowsToContents()
-            if len(rows) == 0:
-                self.status_label.setText("Seçilen filtrelerle eşleşen kayıt bulunamadı")
-            else:
-                self.status_label.setText(f"Gösterilen: {len(rows)} / Toplam: {total_docs} kayıt")
         except Exception as e:
             import traceback
             error_msg = f"Sorular yüklenemedi: {e}\n\nDetay: {traceback.format_exc()}"
@@ -2320,8 +2708,15 @@ class SoruListePenceresi(QWidget):
     
     def open_edit_panel(self, doc_id: str):
         try:
-            panel = SoruDuzenlemePaneli(doc_id)
-            panel.showFullScreen()
+            self.edit_panel = SoruDuzenlemePaneli(doc_id)
+            try:
+                self.edit_panel.showFullScreen()
+            except Exception:
+                self.edit_panel.showMaximized()
+            try:
+                self.edit_panel.raise_(); self.edit_panel.activateWindow()
+            except Exception:
+                pass
             self.close()
         except Exception as e:
             QMessageBox.critical(self, "Hata", f"Düzenleme ekranı açılamadı: {e}")
@@ -2340,6 +2735,11 @@ class SoruListePenceresi(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    # Son pencere kapanınca uygulama kapanmasın
+    try:
+        app.setQuitOnLastWindowClosed(True)
+    except Exception:
+        pass
     
     # Uygulama ayarları
     app.setApplicationName("Trafik Koçu Soru Yönetim Sistemi")
@@ -2349,15 +2749,5 @@ if __name__ == "__main__":
     window = AnaMenu()
     window.show()
     # Show image on top-right of the main window after it exists
-    try:
-        label = QLabel(window)
-        pixmap = QPixmap("resim.png")
-        if not pixmap.isNull():
-            label.setPixmap(pixmap)
-            label.setGeometry(window.width() - pixmap.width() - 10, 10, pixmap.width(), pixmap.height())
-            label.raise_()
-            label.show()
-    except Exception:
-        pass
     
     sys.exit(app.exec())
