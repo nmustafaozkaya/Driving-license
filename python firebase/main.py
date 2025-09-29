@@ -561,7 +561,7 @@ class SoruEklemePaneli(QWidget):
         cevap_secenekleri_layout.setSpacing(2)
         cevap_secenekleri_layout.setContentsMargins(3, 2, 3, 2)
         # Başlık: Cevaplar giriniz - Büyütüldü
-        cevaplar_baslik = QLabel("📝 CEVAPLARI GİRİNİZ")
+        cevaplar_baslik = QLabel("SORUNUN CEVAPLARINI GİRİNİZ")
         cevaplar_baslik.setStyleSheet("""
             QLabel {
                 color: #28a745;
@@ -594,7 +594,8 @@ class SoruEklemePaneli(QWidget):
             row_layout.setContentsMargins(0, 1, 0, 1)
             row_layout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
 
-            label = QLabel(f"Cevap {i+1}:")
+            letter = "ABCD"[i]
+            label = QLabel(f"{letter}:")
             label.setMinimumHeight(24)
             label.setMinimumWidth(80)
             label.setStyleSheet("""
@@ -613,7 +614,7 @@ class SoruEklemePaneli(QWidget):
             row_layout.addWidget(label)
             
             line_edit = QLineEdit()
-            line_edit.setPlaceholderText(f"Seçenek {i+1}")
+            line_edit.setPlaceholderText(f"Seçenek {letter}")
             line_edit.setFont(answer_font)
             line_edit.setMinimumHeight(24)
             line_edit.setStyleSheet("""
@@ -655,7 +656,7 @@ class SoruEklemePaneli(QWidget):
         cevap_resimleri_layout.setContentsMargins(0, 0, 0, 0)  # Üst ve alt boşluk kaldırıldı
 
         # CEVAP RESİMLERİ başlığı - EN ÜSTTE
-        cevap_resim_baslik = QLabel("🖼️ CEVAP RESİMLERİ:")
+        cevap_resim_baslik = QLabel("SORUNUN CEVAP RESİMLERİNİ GİRİNİZ")
         cevap_resim_baslik.setStyleSheet("""
             QLabel {
                 color: #28a745;
@@ -688,7 +689,8 @@ class SoruEklemePaneli(QWidget):
             resim_row.setSpacing(1)
             resim_row.setContentsMargins(0, 0, 0, 0)
 
-            resim_label = QLabel(f"Cevap {i+1}:")
+            letter = "ABCD"[i]
+            resim_label = QLabel(f"{letter}:")
             resim_label.setMinimumHeight(24)
             resim_label.setMinimumWidth(80)
             resim_label.setStyleSheet("""
@@ -707,7 +709,7 @@ class SoruEklemePaneli(QWidget):
             resim_row.addWidget(resim_label)
             
             resim_input = QLineEdit()
-            resim_input.setPlaceholderText(f"Resim URL...")
+            resim_input.setPlaceholderText(f"{letter} için resim URL...")
             resim_input.setFont(QFont('Arial', 10))
             resim_input.setMinimumHeight(24)
             resim_input.setStyleSheet("""
@@ -761,7 +763,7 @@ class SoruEklemePaneli(QWidget):
         dogru_layout = QHBoxLayout()
         dogru_layout.addWidget(QLabel("✅ Doğru Cevap:"))
         self.dogru_combo = QComboBox()
-        self.dogru_combo.addItems(["1. Seçenek", "2. Seçenek", "3. Seçenek", "4. Seçenek"])
+        self.dogru_combo.addItems(["A", "B", "C", "D"])
         self.dogru_combo.setFont(font)
         dogru_layout.addWidget(self.dogru_combo)
         dogru_layout.addStretch()
@@ -1191,7 +1193,7 @@ class SoruEklemePaneli(QWidget):
                 if url:
                     self.cevap_resim_inputs[index].setText(url)
                     self._guncelle_cevap_resim_onizleme(index)
-                    QMessageBox.information(self, "Başarılı", f"Cevap {index+1} resmi Firebase Storage'a yüklendi!")
+                    QMessageBox.information(self, "Başarılı", "Resim yüklendi.")
                 else:
                     QMessageBox.warning(self, "Hata", "Resim yüklenemedi!")
             else:
@@ -1266,6 +1268,14 @@ class SoruEklemePaneli(QWidget):
                 QMessageBox.warning(self, "⚠️ Uyarı", "Lütfen soruyu detaylı bir şekilde yazın!")
                 self.soru_input.setFocus()
                 return
+            # Kategori seçimi zorunlu
+            if self.secili_kategori is None:
+                QMessageBox.warning(self, "⚠️ Uyarı", "Lütfen bir kategori seçin!")
+                return
+            # Tarih zorunlu
+            if not self.gun_combo.currentText().strip() or not self.ay_combo.currentText().strip() or not self.yil_combo.currentText().strip():
+                QMessageBox.warning(self, "⚠️ Uyarı", "Lütfen gün, ay ve yıl seçin!")
+                return
                 
             # Cevap kontrolü - Esnek yapı (metin veya resim)
             cevaplar_raw = [c.text() for c in self.cevap_inputs]
@@ -1273,14 +1283,16 @@ class SoruEklemePaneli(QWidget):
             cevap_resimleri_raw = [c.text() for c in self.cevap_resim_inputs]
             cevap_resimleri = [str(c).strip() for c in cevap_resimleri_raw]
             
-            # En az bir cevap (metin veya resim) olmalı
-            gecerli_cevaplar = 0
+            # Dört cevabın her biri dolu olmalı (metin veya resim)
+            letters = ["A", "B", "C", "D"]
             for i in range(4):
-                if cevaplar[i] or cevap_resimleri[i]:
-                    gecerli_cevaplar += 1
-            
-            if gecerli_cevaplar == 0:
-                QMessageBox.warning(self, "⚠️ Uyarı", "Lütfen en az bir cevap seçeneği doldurun (metin veya resim)!")
+                if not (cevaplar[i] or cevap_resimleri[i]):
+                    QMessageBox.warning(self, "⚠️ Uyarı", f"Lütfen {letters[i]} seçeneği için metin veya resim girin!")
+                    return
+            # Doğru cevap boş olamaz
+            correct_index = int(self.dogru_combo.currentIndex())
+            if not (cevaplar[correct_index] or cevap_resimleri[correct_index]):
+                QMessageBox.warning(self, "⚠️ Uyarı", "Doğru cevap olarak seçtiğiniz seçenek boş. Lütfen doğru cevabı dolu bir seçenekten seçin!")
                 return
             
             # Medya URL'lerini direkt al (Firebase Storage kullanmadan)
@@ -1351,31 +1363,13 @@ class SoruEklemePaneli(QWidget):
             # Firebase'e kaydet
             doc_ref = db.collection("sorular").add(soru_veri)
             
-            # Başarı mesajı - Özelleştirilmiş
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Icon.Information)
-            msg.setWindowTitle("✅ Başarılı!")
-            msg.setText("🎉 Soru başarıyla kaydedildi!")
-            # Medya bilgilerini hazırla
-            resim_sayisi = len([url for url in soru_veri['soru_resimleri'] if url])
-            video_var = bool(soru_veri['soru_videosu'])
-            
-            medya_bilgi = []
-            if resim_sayisi > 0:
-                medya_bilgi.append(f"{resim_sayisi} Resim")
-            if video_var:
-                medya_bilgi.append("Video")
-            if not medya_bilgi:
-                medya_bilgi.append("Yok")
-            
-            msg.setInformativeText(f"""
-📊 Soru Detayları:
-• ID: {doc_ref[1].id[:12]}...
-• Kategori: {soru_veri['kategori']}
-• Cevap Sayısı: {len(cevaplar)}
-• Medya: {' / '.join(medya_bilgi)}
-            """)
+            # Başarı mesajı - Basit, ortalanmış ve simgesiz
+            msg = QMessageBox(self)
+            msg.setIcon(QMessageBox.Icon.NoIcon)
+            msg.setWindowTitle("Başarılı")
+            msg.setText("<div style='text-align:center'>Soru başarıyla kaydedildi!</div>")
             msg.setStandardButtons(QMessageBox.StandardButton.Ok)
+            # Varsayılan konumlandırma: merkez
             msg.exec()
             
             self.formu_temizle_onaysiz()  # Onay istemeden temizle
@@ -1640,6 +1634,29 @@ class SoruDuzenlemePaneli(SoruEklemePaneli):
             cevaplar = [str(c).strip() for c in cevaplar_raw]
             cevap_resimleri_raw = [c.text() for c in self.cevap_resim_inputs]
             cevap_resimleri = [str(c).strip() for c in cevap_resimleri_raw]
+            # Zorunlu: soru metni
+            if not self.soru_input.toPlainText().strip():
+                QMessageBox.warning(self, "⚠️ Uyarı", "Lütfen soruyu detaylı bir şekilde yazın!")
+                return
+            # Zorunlu: kategori
+            if self.secili_kategori is None:
+                QMessageBox.warning(self, "⚠️ Uyarı", "Lütfen bir kategori seçin!")
+                return
+            # Zorunlu: tarih
+            if not self.gun_combo.currentText().strip() or not self.ay_combo.currentText().strip() or not self.yil_combo.currentText().strip():
+                QMessageBox.warning(self, "⚠️ Uyarı", "Lütfen gün, ay ve yıl seçin!")
+                return
+            # Her seçenek için metin veya resim zorunlu
+            letters = ["A", "B", "C", "D"]
+            for i in range(4):
+                if not (cevaplar[i] or cevap_resimleri[i]):
+                    QMessageBox.warning(self, "⚠️ Uyarı", f"Lütfen {letters[i]} seçeneği için metin veya resim girin!")
+                    return
+            # Doğru seçimin dolu olması zorunlu
+            correct_index = int(self.dogru_combo.currentIndex())
+            if not (cevaplar[correct_index] or cevap_resimleri[correct_index]):
+                QMessageBox.warning(self, "⚠️ Uyarı", "Doğru cevap olarak seçtiğiniz seçenek boş. Lütfen doğru cevabı dolu bir seçenekten seçin!")
+                return
             cevap_verileri = []
             for i, cevap_metni in enumerate(cevaplar):
                 resim_url = cevap_resimleri[i] if i < len(cevap_resimleri) else ""
@@ -1677,18 +1694,12 @@ class SoruDuzenlemePaneli(SoruEklemePaneli):
             # Güncelle
             db.collection("sorular").document(self.doc_id).set(soru_veri, merge=False)
             QMessageBox.information(self, "Başarılı", "Soru güncellendi.")
-            # Düzenleme sonrası geri dön
-            self.geri()
-        except Exception as e:
-            import traceback
-            error_msg = f"Soru güncellenirken hata oluştu:\n{str(e)}\n\nDetay: {traceback.format_exc()}"
-            QMessageBox.critical(self, "❌ Hata", error_msg)
-
-    def geri(self):
-        try:
-            # Önce aynı tarihin liste ekranına dönmeye çalış
-            if self.prev_gun and self.prev_ay and self.prev_yil:
-                p = SoruListePenceresi(self.prev_gun, self.prev_ay, self.prev_yil)
+            # Düzenleme sonrası doğrudan seçili tarihin liste ekranına git
+            try:
+                gun_str = str(gun_int)
+                ay_str_local = str(ay_str)
+                yil_str = str(yil_int)
+                p = SoruListePenceresi(gun_str, ay_str_local, yil_str)
                 try:
                     p.showFullScreen()
                 except Exception:
@@ -1698,23 +1709,36 @@ class SoruDuzenlemePaneli(SoruEklemePaneli):
                 except Exception:
                     pass
                 self.close()
-                return
-        except Exception:
-            pass
-        # Tarih seçme ekranına dön
+            except Exception:
+                self.geri()
+        except Exception as e:
+            import traceback
+            error_msg = f"Soru güncellenirken hata oluştu:\n{str(e)}\n\nDetay: {traceback.format_exc()}"
+            QMessageBox.critical(self, "❌ Hata", error_msg)
+
+    def geri(self):
         try:
-            d = DuzenlemePaneli()
+            # Öncelik: düzenleme esnasında görünen tarih (previous varsa onu, yoksa combo'lardan al)
+            gun = self.prev_gun or self.gun_combo.currentText()
+            ay = self.prev_ay or self.ay_combo.currentText()
+            yil = self.prev_yil or self.yil_combo.currentText()
+            p = SoruListePenceresi(str(gun), str(ay), str(yil))
             try:
-                d.show()
+                p.showFullScreen()
             except Exception:
-                pass
+                p.showMaximized()
             try:
-                d.raise_(); d.activateWindow()
+                p.raise_(); p.activateWindow()
             except Exception:
                 pass
             self.close()
         except Exception:
-            self.close()
+            try:
+                d = DuzenlemePaneli()
+                d.show()
+                self.close()
+            except Exception:
+                self.close()
 
     def tarih_sec_ekrani(self):
         # Tercih: doğrudan soru listesine dön (seçili tarihle)
