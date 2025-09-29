@@ -50,6 +50,10 @@ class _RandomAllQuizPageState extends State<RandomAllQuizPage> {
   }
 
   void _next() {
+    // Lock current question on next (allowing blanks)
+    if (!_lockedByIndex[_index]) {
+      _lockedByIndex[_index] = true;
+    }
     if (_index < _docs.length - 1) {
       setState(() {
         _index++;
@@ -72,18 +76,7 @@ class _RandomAllQuizPageState extends State<RandomAllQuizPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Rastgele Sınav'),
-        centerTitle: true,
-        actions: [
-          if (_docs.isNotEmpty && _index == _docs.length - 1)
-            IconButton(
-              tooltip: 'Cevapları Göster',
-              onPressed: _showAnswers,
-              icon: const Icon(Icons.list_alt),
-            ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Rastgele Sınav'), centerTitle: true),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _docs.isEmpty
@@ -111,9 +104,18 @@ class _RandomAllQuizPageState extends State<RandomAllQuizPage> {
                             label: const Text('Sonraki'),
                           )
                         : ElevatedButton.icon(
-                            onPressed: _showAnswers,
+                            onPressed: () {
+                              // Lock last question if not locked
+                              if (!_lockedByIndex[_index]) {
+                                setState(() {
+                                  _lockedByIndex[_index] = true;
+                                  _locked = true;
+                                });
+                              }
+                              _showSummary();
+                            },
                             icon: const Icon(Icons.checklist),
-                            label: const Text('Cevapları Göster'),
+                            label: const Text('Özet Göster'),
                           ),
                   ),
                 ],
@@ -142,12 +144,6 @@ class _RandomAllQuizPageState extends State<RandomAllQuizPage> {
               Text(
                 '(${_index + 1}/$total) Rastgele',
                 style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-              const Spacer(),
-              IconButton(
-                tooltip: 'Yenile',
-                onPressed: _load,
-                icon: const Icon(Icons.shuffle),
               ),
             ],
           ),
@@ -232,8 +228,8 @@ class _RandomAllQuizPageState extends State<RandomAllQuizPage> {
                   if (_locked) return;
                   setState(() {
                     _selectedOption = i;
-                    _locked = true;
                     _selectedOptionsByIndex[_index] = i;
+                    _locked = true;
                     _lockedByIndex[_index] = true;
                   });
                 },
@@ -294,18 +290,28 @@ class _RandomAllQuizPageState extends State<RandomAllQuizPage> {
     }
   }
 
-  void _showAnswers() {
-    final items = List.generate(_docs.length, (i) {
+  void _showSummary() {
+    int correct = 0;
+    int wrong = 0;
+    for (int i = 0; i < _docs.length; i++) {
+      if (!_lockedByIndex[i]) continue;
       final d = _docs[i].data();
-      final String soru = (d['soru'] ?? '').toString();
-      final int cevapIndex = d['cevap'] is int
+      final int answerIndex = d['cevap'] is int
           ? d['cevap'] as int
           : int.tryParse('${d['cevap']}') ?? -1;
-      final String letter = cevapIndex >= 0
-          ? String.fromCharCode('A'.codeUnitAt(0) + cevapIndex)
-          : '-';
-      return {'soru': soru, 'harf': letter};
-    });
+      final sel = _selectedOptionsByIndex[i];
+      if (sel == null) continue;
+      if (sel == answerIndex) {
+        correct++;
+      } else {
+        wrong++;
+      }
+    }
+
+    final blanks = _docs.length - (correct + wrong);
+    final int total = _docs.isEmpty ? 1 : _docs.length;
+    final double success = correct / total;
+    final bool isRisk = success < 0.70;
 
     showDialog(
       context: context,
@@ -314,44 +320,56 @@ class _RandomAllQuizPageState extends State<RandomAllQuizPage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          title: const Text('Cevap Anahtarı (15 Soru)'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.separated(
-              shrinkWrap: true,
-              itemCount: items.length,
-              separatorBuilder: (_, __) => const Divider(height: 8),
-              itemBuilder: (context, i) {
-                final item = items[i];
-                final soru = item['soru'] as String;
-                final harf = item['harf'] as String;
-                final short = soru.length > 80
-                    ? soru.substring(0, 80) + '…'
-                    : soru;
-                return ListTile(
-                  dense: true,
-                  title: Text('${i + 1}. $short'),
-                  trailing: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: Colors.green),
-                    ),
-                    child: Text(
-                      'Doğru: $harf',
-                      style: const TextStyle(
-                        color: Colors.green,
-                        fontWeight: FontWeight.w800,
-                      ),
+          title: Row(
+            children: [
+              const Text('Sınav Özeti'),
+              const Spacer(),
+              if (isRisk)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: Colors.orange),
+                  ),
+                  child: const Text(
+                    'Riskli',
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
-                );
-              },
-            ),
+                ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _stat('Doğru', correct, Colors.green),
+                  _stat('Yanlış', wrong, Colors.red),
+                  _stat('Boş', blanks, Colors.grey),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  '%${(((correct) / (_docs.length == 0 ? 1 : _docs.length)) * 100).round()}',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
           ),
           actions: [
             TextButton(
@@ -361,6 +379,36 @@ class _RandomAllQuizPageState extends State<RandomAllQuizPage> {
           ],
         );
       },
+    );
+  }
+
+  Widget _stat(String label, int value, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            label == 'Doğru'
+                ? Icons.check_circle
+                : label == 'Yanlış'
+                ? Icons.cancel
+                : Icons.help_outline,
+            size: 16,
+            color: color,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            '$label: $value',
+            style: TextStyle(color: color, fontWeight: FontWeight.w800),
+          ),
+        ],
+      ),
     );
   }
 }
