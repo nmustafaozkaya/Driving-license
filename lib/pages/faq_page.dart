@@ -15,6 +15,11 @@ class _FAQPageState extends State<FAQPage> {
           "Adayların sorulara verdikleri doğru cevap sayıları tespit edilerek 100 puan üzerinden hesaplama yapılır. Yanlış cevaplar netinizi düşürmez. Merkezi sistem sınavında her soru eşit puandadır. 100 üzerinden 70 ve üzeri puan alan adaylar başarılı sayılır.",
     ),
     _FAQItem(
+      question: "Ehliyet sınav soru dağılımı nasıldır?",
+      answer:
+          "Trafik ve Çevre Bilgisi: 23 soru\nİlk Yardım Bilgisi: 12 soru\nAraç Tekniği (Motor ve Araç Bakımı): 9 soru\nTrafik Adabı: 6 soru",
+    ),
+    _FAQItem(
       question: "Ehliyet sınavında kaç soru var?",
       answer: "Ehliyet sınavında toplam 50 soru bulunmaktadır.",
     ),

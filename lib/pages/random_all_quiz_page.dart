@@ -32,7 +32,7 @@ class _RandomAllQuizPageState extends State<RandomAllQuizPage> {
     final rng = Random();
     final picked = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
     final used = <int>{};
-    final desired = min(50, all.length);
+    final desired = min(15, all.length);
     while (picked.length < desired) {
       final i = rng.nextInt(all.length);
       if (!used.contains(i)) {
@@ -72,12 +72,23 @@ class _RandomAllQuizPageState extends State<RandomAllQuizPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Rastgele Sınav'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text('Rastgele Sınav'),
+        centerTitle: true,
+        actions: [
+          if (_docs.isNotEmpty && _index == _docs.length - 1)
+            IconButton(
+              tooltip: 'Cevapları Göster',
+              onPressed: _showAnswers,
+              icon: const Icon(Icons.list_alt),
+            ),
+        ],
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _docs.isEmpty
-              ? const Center(child: Text('Soru bulunamadı.'))
-              : _buildBody(context),
+          ? const Center(child: Text('Soru bulunamadı.'))
+          : _buildBody(context),
       bottomNavigationBar: _docs.isEmpty
           ? null
           : SafeArea(
@@ -93,11 +104,17 @@ class _RandomAllQuizPageState extends State<RandomAllQuizPage> {
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: _index < _docs.length - 1 ? _next : null,
-                      icon: const Icon(Icons.navigate_next),
-                      label: const Text('Sonraki'),
-                    ),
+                    child: _index < _docs.length - 1
+                        ? ElevatedButton.icon(
+                            onPressed: _next,
+                            icon: const Icon(Icons.navigate_next),
+                            label: const Text('Sonraki'),
+                          )
+                        : ElevatedButton.icon(
+                            onPressed: _showAnswers,
+                            icon: const Icon(Icons.checklist),
+                            label: const Text('Cevapları Göster'),
+                          ),
                   ),
                 ],
               ),
@@ -122,8 +139,10 @@ class _RandomAllQuizPageState extends State<RandomAllQuizPage> {
         children: [
           Row(
             children: [
-              Text('(${_index + 1}/$total) Rastgele',
-                  style: const TextStyle(fontWeight: FontWeight.w700)),
+              Text(
+                '(${_index + 1}/$total) Rastgele',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
               const Spacer(),
               IconButton(
                 tooltip: 'Yenile',
@@ -171,7 +190,9 @@ class _RandomAllQuizPageState extends State<RandomAllQuizPage> {
                 leadingIcon = Icons.cancel;
               }
             } else if (isSelected) {
-              tileColor = (isDark ? Colors.white : Colors.black).withOpacity(0.06);
+              tileColor = (isDark ? Colors.white : Colors.black).withOpacity(
+                0.06,
+              );
             }
 
             final letter = String.fromCharCode('A'.codeUnitAt(0) + i);
@@ -190,7 +211,9 @@ class _RandomAllQuizPageState extends State<RandomAllQuizPage> {
                     shape: BoxShape.circle,
                     border: Border.all(color: borderColor, width: 2),
                     color: leadingIcon != null
-                        ? (isCorrect ? Colors.green : Colors.red).withOpacity(0.15)
+                        ? (isCorrect ? Colors.green : Colors.red).withOpacity(
+                            0.15,
+                          )
                         : null,
                   ),
                   alignment: Alignment.center,
@@ -229,7 +252,10 @@ class _RandomAllQuizPageState extends State<RandomAllQuizPage> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(metin, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+          Text(
+            metin,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+          ),
           if (resimUrl.isNotEmpty) ...[
             const SizedBox(height: 8),
             ClipRRect(
@@ -244,7 +270,11 @@ class _RandomAllQuizPageState extends State<RandomAllQuizPage> {
                   fit: BoxFit.contain,
                   filterQuality: FilterQuality.medium,
                   errorBuilder: (context, error, stackTrace) {
-                    return const Icon(Icons.image_not_supported, color: Colors.grey, size: 40);
+                    return const Icon(
+                      Icons.image_not_supported,
+                      color: Colors.grey,
+                      size: 40,
+                    );
                   },
                   loadingBuilder: (context, child, loadingProgress) {
                     if (loadingProgress == null) return child;
@@ -257,9 +287,80 @@ class _RandomAllQuizPageState extends State<RandomAllQuizPage> {
         ],
       );
     } else {
-      return Text(cevap.toString(), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600));
+      return Text(
+        cevap.toString(),
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      );
     }
   }
+
+  void _showAnswers() {
+    final items = List.generate(_docs.length, (i) {
+      final d = _docs[i].data();
+      final String soru = (d['soru'] ?? '').toString();
+      final int cevapIndex = d['cevap'] is int
+          ? d['cevap'] as int
+          : int.tryParse('${d['cevap']}') ?? -1;
+      final String letter = cevapIndex >= 0
+          ? String.fromCharCode('A'.codeUnitAt(0) + cevapIndex)
+          : '-';
+      return {'soru': soru, 'harf': letter};
+    });
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: const Text('Cevap Anahtarı (15 Soru)'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: items.length,
+              separatorBuilder: (_, __) => const Divider(height: 8),
+              itemBuilder: (context, i) {
+                final item = items[i];
+                final soru = item['soru'] as String;
+                final harf = item['harf'] as String;
+                final short = soru.length > 80
+                    ? soru.substring(0, 80) + '…'
+                    : soru;
+                return ListTile(
+                  dense: true,
+                  title: Text('${i + 1}. $short'),
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: Colors.green),
+                    ),
+                    child: Text(
+                      'Doğru: $harf',
+                      style: const TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Kapat'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
-
-
