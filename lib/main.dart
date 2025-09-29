@@ -9,6 +9,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'pages/pdf_viewer_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'pages/meb_map_page.dart';
+import 'pages/favorite_questions_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -443,7 +445,11 @@ class _HomePageState extends State<HomePage> {
                       GestureDetector(
                         onTap: () {
                           Navigator.of(context).pop();
-                          _showMessage('Favoriler yakında.');
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const FavoriteQuestionsPage(),
+                            ),
+                          );
                         },
                         child: Container(
                           padding: const EdgeInsets.symmetric(
@@ -526,6 +532,28 @@ class _HomePageState extends State<HomePage> {
               },
             ),
             const Divider(),
+            ListTile(
+              leading: const Icon(Icons.favorite_outline),
+              title: const Text('Favori Sorularım'),
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const FavoriteQuestionsPage(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.map_outlined),
+              title: const Text('E-Sınav Sonuçları'),
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const MebMapPage()));
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.share_outlined),
               title: const Text('Uygulamayı Paylaş'),
@@ -619,9 +647,14 @@ class _HomePageState extends State<HomePage> {
     const String femaleInstructorPhone = '905555555556';
 
     Future<void> openWhatsApp(String phone, String name) async {
-      final message = 'Merhaba $name, Trafik Koçu uygulamasından canlı/özel ders talep ediyorum.';
-      final uri = Uri.parse('https://wa.me/$phone?text=${Uri.encodeComponent(message)}');
-      final deep = Uri.parse('whatsapp://send?phone=$phone&text=${Uri.encodeComponent(message)}');
+      final message =
+          'Merhaba $name, Trafik Koçu uygulamasından canlı/özel ders talep ediyorum.';
+      final uri = Uri.parse(
+        'https://wa.me/$phone?text=${Uri.encodeComponent(message)}',
+      );
+      final deep = Uri.parse(
+        'whatsapp://send?phone=$phone&text=${Uri.encodeComponent(message)}',
+      );
       if (await canLaunchUrl(deep)) {
         final ok = await launchUrl(deep, mode: LaunchMode.externalApplication);
         if (ok) return;
@@ -631,11 +664,17 @@ class _HomePageState extends State<HomePage> {
         if (ok) return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('WhatsApp açılamadı. Lütfen gerçek cihazda deneyin.')),
+        const SnackBar(
+          content: Text('WhatsApp açılamadı. Lütfen gerçek cihazda deneyin.'),
+        ),
       );
     }
 
-    Widget person({required String assetPath, required String name, required String phone}) {
+    Widget person({
+      required String assetPath,
+      required String name,
+      required String phone,
+    }) {
       final ValueNotifier<double> scale = ValueNotifier<double>(1.0);
       final ValueNotifier<bool> hovered = ValueNotifier<bool>(false);
       return Expanded(
@@ -666,20 +705,29 @@ class _HomePageState extends State<HomePage> {
                       return AnimatedContainer(
                         duration: const Duration(milliseconds: 180),
                         curve: Curves.easeOut,
-                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 16,
+                          horizontal: 14,
+                        ),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF20262F) : Colors.white,
+                          color: isDark
+                              ? const Color(0xFF20262F)
+                              : Colors.white,
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: isDark
                               ? null
                               : [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(h ? 0.10 : 0.06),
+                                    color: Colors.black.withOpacity(
+                                      h ? 0.10 : 0.06,
+                                    ),
                                     blurRadius: h ? 22 : 16,
                                     offset: const Offset(0, 8),
                                   ),
                                 ],
-                          border: Border.all(color: isDark ? Colors.white12 : Colors.black12),
+                          border: Border.all(
+                            color: isDark ? Colors.white12 : Colors.black12,
+                          ),
                         ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -712,7 +760,9 @@ class _HomePageState extends State<HomePage> {
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: isDark
+                                    ? Colors.white
+                                    : const Color(0xFF0F172A),
                                 letterSpacing: 0.2,
                               ),
                               textAlign: TextAlign.center,
@@ -725,14 +775,19 @@ class _HomePageState extends State<HomePage> {
                                 icon: SizedBox(
                                   width: 18,
                                   height: 18,
-                                  child: Image.asset('lib/assests/logo/whatsapp.png', fit: BoxFit.contain),
+                                  child: Image.asset(
+                                    'lib/assests/logo/whatsapp.png',
+                                    fit: BoxFit.contain,
+                                  ),
                                 ),
                                 label: const Text('WhatsApp'),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF25D366),
                                   foregroundColor: Colors.white,
                                   elevation: 0,
-                                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(999),
                                   ),
@@ -757,16 +812,24 @@ class _HomePageState extends State<HomePage> {
       decoration: BoxDecoration(
         gradient: isDark
             ? const LinearGradient(
-                colors: [Color(0xFF1E1B4B), Color(0xFF312E81), Color(0xFF3B0764)],
+                colors: [
+                  Color(0xFF1E1B4B),
+                  Color(0xFF312E81),
+                  Color(0xFF3B0764),
+                ],
                 stops: [0.0, 0.55, 1.0],
-                begin: Alignment( -0.9, -1.0),
-                end: Alignment( 0.9, 1.0),
+                begin: Alignment(-0.9, -1.0),
+                end: Alignment(0.9, 1.0),
               )
             : const LinearGradient(
-                colors: [Color(0xFF7C3AED), Color(0xFFE879F9), Color(0xFFFB7185)],
+                colors: [
+                  Color(0xFF7C3AED),
+                  Color(0xFFE879F9),
+                  Color(0xFFFB7185),
+                ],
                 stops: [0.0, 0.5, 1.0],
-                begin: Alignment( -1.0, -0.8),
-                end: Alignment( 1.0, 0.8),
+                begin: Alignment(-1.0, -0.8),
+                end: Alignment(1.0, 0.8),
               ),
         borderRadius: BorderRadius.circular(20),
       ),
@@ -788,7 +851,11 @@ class _HomePageState extends State<HomePage> {
                     color: Colors.white.withOpacity(0.18),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.video_call_rounded, color: Colors.white, size: 26),
+                  child: const Icon(
+                    Icons.video_call_rounded,
+                    color: Colors.white,
+                    size: 26,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -807,10 +874,7 @@ class _HomePageState extends State<HomePage> {
                       SizedBox(height: 4),
                       Text(
                         'Eğitmenlerimizle WhatsApp üzerinden anında iletişim kurun',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white70,
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.white70),
                       ),
                     ],
                   ),
@@ -820,9 +884,17 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 16),
             Row(
               children: [
-                person(assetPath: 'lib/assests/ManWoman/man.png', name: maleInstructorName, phone: maleInstructorPhone),
+                person(
+                  assetPath: 'lib/assests/ManWoman/man.png',
+                  name: maleInstructorName,
+                  phone: maleInstructorPhone,
+                ),
                 const SizedBox(width: 12),
-                person(assetPath: 'lib/assests/ManWoman/woman.png', name: femaleInstructorName, phone: femaleInstructorPhone),
+                person(
+                  assetPath: 'lib/assests/ManWoman/woman.png',
+                  name: femaleInstructorName,
+                  phone: femaleInstructorPhone,
+                ),
               ],
             ),
           ],
@@ -830,8 +902,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
-  
 
   Widget _buildSocialMediaSection() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -854,7 +924,14 @@ class _HomePageState extends State<HomePage> {
           chipBg,
         ),
         const SizedBox(width: 8),
-        _buildActionChip(Icons.star, 'Favoriler', chipBg),
+        GestureDetector(
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const FavoriteQuestionsPage()),
+            );
+          },
+          child: _buildActionChip(Icons.star, 'Favoriler', chipBg),
+        ),
       ],
     );
   }
@@ -1166,8 +1243,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
-  
 
   Widget _buildBottomCategoriesGrid() {
     final bottomCategories = [
