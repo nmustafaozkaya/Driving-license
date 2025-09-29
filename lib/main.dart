@@ -527,7 +527,7 @@ class _HomePageState extends State<HomePage> {
             ),
             ListTile(
               leading: const Icon(Icons.map_outlined),
-              title: const Text('E-Sınav'),
+              title: const Text('E-Sınav Sonuç Sayfası'),
               onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(
