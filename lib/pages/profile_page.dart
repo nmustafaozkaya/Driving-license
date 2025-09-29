@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'privacy_page.dart';
-import 'live_lesson_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final String userName;
@@ -160,8 +159,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   title: const Text('Yardım ve Destek'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const LiveLessonPage()),
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Destek için ana sayfadaki Canlı/Özel Ders kartını kullanın.')),
                     );
                   },
                 ),

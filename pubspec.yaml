@@ -84,6 +84,7 @@ flutter:
     - lib/assests/icons/lessons_icon.png
     - lib/assests/logo/
     - lib/assests/pdfs/
+    - lib/assests/ManWoman/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

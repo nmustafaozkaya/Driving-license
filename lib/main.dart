@@ -3,7 +3,6 @@ import 'pages/profile_page.dart';
 import 'pages/announcements_page.dart';
 import 'pages/privacy_page.dart';
 import 'pages/faq_page.dart';
-import 'pages/live_lesson_page.dart';
 import 'pages/all_questions_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -108,10 +107,6 @@ class _HomePageState extends State<HomePage> {
   String _userName = 'Kullanıcı Adı';
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  // Enhanced progress tracking
-  int _totalExams = 0;
-  int _completedExams = 0;
-  int _inProgressExams = 0;
   int _totalQuestions = 0;
   int _solvedQuestions = 0;
 
@@ -142,13 +137,9 @@ class _HomePageState extends State<HomePage> {
       }
 
       final dateItems = uniqueDates.values.toList();
-      final totalExams = dateItems.length;
-
-      // Calculate progress for each exam
+      // Calculate totals
       int totalSolved = 0;
       int totalQuestions = 0;
-      int completedExams = 0;
-      int inProgressExams = 0;
 
       for (final item in dateItems) {
         final int yil = item['yıl'] as int;
@@ -167,17 +158,10 @@ class _HomePageState extends State<HomePage> {
         final solved = prefs.getInt('exam_solved_$examKey') ?? 0;
         totalSolved += solved;
 
-        if (solved == examQuestions && examQuestions > 0) {
-          completedExams++;
-        } else if (solved > 0) {
-          inProgressExams++;
-        }
+        // We no longer track per-exam completion breakdown on the home header
       }
 
       setState(() {
-        _totalExams = totalExams;
-        _completedExams = completedExams;
-        _inProgressExams = inProgressExams;
         _totalQuestions = totalQuestions;
         _solvedQuestions = totalSolved;
         _passProbability = totalQuestions > 0
@@ -223,11 +207,9 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildExamProbabilitySection(),
+                  _buildLiveLessonContactCard(),
                   const SizedBox(height: 16),
                   _buildSocialMediaSection(),
-                  const SizedBox(height: 16),
-                  _buildPrivateLessonCard(),
                   const SizedBox(height: 16),
                   _buildMainExamCard(),
                   const SizedBox(height: 16),
@@ -628,169 +610,228 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildExamProbabilitySection() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(6.0),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.asset(
-                      'lib/assests/logo/logo.jpeg',
-                      fit: BoxFit.cover,
-                    ),
+  Widget _buildLiveLessonContactCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    const String maleInstructorName = 'Hakim Hoca';
+    const String femaleInstructorName = 'Ece Hoca';
+    // Update these numbers with country code, without leading + or 00
+    const String maleInstructorPhone = '905555555555';
+    const String femaleInstructorPhone = '905555555556';
+
+    Future<void> openWhatsApp(String phone, String name) async {
+      final message = 'Merhaba $name, Trafik Koçu uygulamasından canlı/özel ders talep ediyorum.';
+      final uri = Uri.parse('https://wa.me/$phone?text=${Uri.encodeComponent(message)}');
+      final deep = Uri.parse('whatsapp://send?phone=$phone&text=${Uri.encodeComponent(message)}');
+      if (await canLaunchUrl(deep)) {
+        final ok = await launchUrl(deep, mode: LaunchMode.externalApplication);
+        if (ok) return;
+      }
+      if (await canLaunchUrl(uri)) {
+        final ok = await launchUrl(uri, mode: LaunchMode.platformDefault);
+        if (ok) return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('WhatsApp açılamadı. Lütfen gerçek cihazda deneyin.')),
+      );
+    }
+
+    Widget person({required String assetPath, required String name, required String phone}) {
+      final ValueNotifier<double> scale = ValueNotifier<double>(1.0);
+      final ValueNotifier<bool> hovered = ValueNotifier<bool>(false);
+      return Expanded(
+        child: MouseRegion(
+          onEnter: (_) {
+            hovered.value = true;
+            scale.value = 1.03;
+          },
+          onExit: (_) {
+            hovered.value = false;
+            scale.value = 1.0;
+          },
+          child: GestureDetector(
+            onTapDown: (_) => scale.value = 0.97,
+            onTapCancel: () => scale.value = hovered.value ? 1.03 : 1.0,
+            onTapUp: (_) => scale.value = hovered.value ? 1.03 : 1.0,
+            onTap: () => openWhatsApp(phone, name),
+            child: ValueListenableBuilder<double>(
+              valueListenable: scale,
+              builder: (context, s, _) {
+                return AnimatedScale(
+                  scale: s,
+                  duration: const Duration(milliseconds: 140),
+                  curve: Curves.easeOut,
+                  child: ValueListenableBuilder<bool>(
+                    valueListenable: hovered,
+                    builder: (context, h, __) {
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        curve: Curves.easeOut,
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF20262F) : Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: isDark
+                              ? null
+                              : [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(h ? 0.10 : 0.06),
+                                    blurRadius: h ? 22 : 16,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
+                          border: Border.all(color: isDark ? Colors.white12 : Colors.black12),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                boxShadow: isDark
+                                    ? null
+                                    : [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.08),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                              ),
+                              child: ClipOval(
+                                child: Image.asset(
+                                  assetPath,
+                                  width: 64,
+                                  height: 64,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              name,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                letterSpacing: 0.2,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 10),
+                            SizedBox(
+                              height: 40,
+                              child: ElevatedButton.icon(
+                                onPressed: () => openWhatsApp(phone, name),
+                                icon: SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: Image.asset('lib/assests/logo/whatsapp.png', fit: BoxFit.contain),
+                                ),
+                                label: const Text('WhatsApp'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF25D366),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Genel İlerleme Durumunuz',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '$_solvedQuestions/$_totalQuestions soru çözüldü',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.white70,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Progress bar
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              minHeight: 12,
-              value: _passProbability,
-              backgroundColor: Colors.white24,
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                Colors.limeAccent,
-              ),
+                );
+              },
             ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '${(_passProbability * 100).round()}% tamamlandı',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: isDark
+            ? const LinearGradient(
+                colors: [Color(0xFF1E1B4B), Color(0xFF312E81), Color(0xFF3B0764)],
+                stops: [0.0, 0.55, 1.0],
+                begin: Alignment( -0.9, -1.0),
+                end: Alignment( 0.9, 1.0),
+              )
+            : const LinearGradient(
+                colors: [Color(0xFF7C3AED), Color(0xFFE879F9), Color(0xFFFB7185)],
+                stops: [0.0, 0.5, 1.0],
+                begin: Alignment( -1.0, -0.8),
+                end: Alignment( 1.0, 0.8),
+              ),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withOpacity(0.12)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.18),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.video_call_rounded, color: Colors.white, size: 26),
                 ),
-              ),
-              Text(
-                '${_totalExams} sınav',
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Exam statistics
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatCard(
-                  'Tamamlanan',
-                  '$_completedExams',
-                  Icons.check_circle,
-                  Colors.green,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'Uzman Eğitmenlerle Birebir',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Eğitmenlerimizle WhatsApp üzerinden anında iletişim kurun',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildStatCard(
-                  'Devam Eden',
-                  '$_inProgressExams',
-                  Icons.hourglass_empty,
-                  Colors.orange,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildStatCard(
-                  'Bekleyen',
-                  '${_totalExams - _completedExams - _inProgressExams}',
-                  Icons.schedule,
-                  Colors.grey,
-                ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                person(assetPath: 'lib/assests/ManWoman/man.png', name: maleInstructorName, phone: maleInstructorPhone),
+                const SizedBox(width: 12),
+                person(assetPath: 'lib/assests/ManWoman/woman.png', name: femaleInstructorName, phone: femaleInstructorPhone),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildStatCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withOpacity(0.2)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          Text(
-            title,
-            style: TextStyle(color: Colors.white70, fontSize: 10),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
+  
 
   Widget _buildSocialMediaSection() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -1126,73 +1167,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildPrivateLessonCard() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const LiveLessonPage()));
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.amber.withOpacity(0.4)),
-          boxShadow: isDark
-              ? null
-              : [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
-                    spreadRadius: 1,
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: Colors.amber[700],
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Icon(Icons.school, color: Colors.white, size: 28),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Özel Ders',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Profesyonel eğitmenlerimize ulaşmak için tıklayın',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 16),
-          ],
-        ),
-      ),
-    );
-  }
+  
 
   Widget _buildBottomCategoriesGrid() {
     final bottomCategories = [
