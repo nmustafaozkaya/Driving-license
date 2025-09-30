@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'dart:math';
 import 'pages/profile_page.dart';
 import 'pages/announcements_page.dart';
 import 'pages/privacy_page.dart';
@@ -6,9 +8,13 @@ import 'pages/faq_page.dart';
 import 'pages/all_questions_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'pages/pdf_viewer_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'pages/meb_map_page.dart';
+import 'pages/favorite_questions_page.dart';
+import 'pages/random_category_quiz_page.dart';
+import 'pages/random_all_quiz_page.dart';
+import 'pages/daily_question_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -104,7 +110,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
   double _passProbability = 0.0;
-  String _userName = 'Kullanıcı Adı';
+  String _userName = 'Sürücü Adayı';
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   int _totalQuestions = 0;
@@ -114,6 +120,106 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _loadProgress();
+  }
+
+  Future<Map<String, dynamic>> _getDailyQuestionData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final todayKey = DateTime.now().toIso8601String().substring(0, 10);
+      final cachedKey = prefs.getString('daily_q_key');
+      final cachedData = prefs.getString('daily_q_data');
+      if (cachedKey == todayKey && cachedData != null) {
+        return jsonDecode(cachedData) as Map<String, dynamic>;
+      }
+
+      final snap = await FirebaseFirestore.instance.collection('sorular').get();
+      if (snap.docs.isEmpty) return {};
+      final rng = Random();
+      final doc = snap.docs[rng.nextInt(snap.docs.length)];
+      final data = doc.data();
+      final result = <String, dynamic>{
+        'soru': (data['soru'] ?? '').toString(),
+        'cevaplar': (data['cevaplar'] ?? []),
+        'cevap': data['cevap'],
+      };
+      await prefs.setString('daily_q_key', todayKey);
+      await prefs.setString('daily_q_data', jsonEncode(result));
+      return result;
+    } catch (_) {
+      return {};
+    }
+  }
+
+  void _showDailyQuestionDialog(Map<String, dynamic> d) {
+    if (d.isEmpty) {
+      _showMessage('Günün sorusu yüklenemedi.');
+      return;
+    }
+    final String soru = (d['soru'] ?? '').toString();
+    final List<dynamic> cevaplar = (d['cevaplar'] ?? []) as List<dynamic>;
+    final int cevapIndex = d['cevap'] is int
+        ? d['cevap'] as int
+        : int.tryParse('${d['cevap']}') ?? -1;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: const Text('Günün Sorusu'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(soru, style: const TextStyle(fontWeight: FontWeight.w800)),
+                const SizedBox(height: 12),
+                ...List.generate(cevaplar.length, (i) {
+                  final String text = cevaplar[i] is Map<String, dynamic>
+                      ? ((cevaplar[i] as Map<String, dynamic>)['metin'] ?? '')
+                            .toString()
+                      : cevaplar[i].toString();
+                  final String letter = String.fromCharCode(
+                    'A'.codeUnitAt(0) + i,
+                  );
+                  final bool isCorrect = i == cevapIndex;
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: isCorrect ? Colors.green.withOpacity(0.10) : null,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isCorrect ? Colors.green : Colors.grey.shade300,
+                      ),
+                    ),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: isCorrect
+                            ? Colors.green.withOpacity(0.15)
+                            : null,
+                        foregroundColor: isCorrect ? Colors.green : null,
+                        child: Text(letter),
+                      ),
+                      title: Text(text),
+                      trailing: isCorrect
+                          ? const Icon(Icons.check_circle, color: Colors.green)
+                          : null,
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Kapat'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _loadProgress() async {
@@ -331,78 +437,6 @@ class _HomePageState extends State<HomePage> {
                       GestureDetector(
                         onTap: () {
                           Navigator.of(context).pop();
-                          setState(() {
-                            _currentIndex = 1;
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.white24),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              Icon(Icons.person, color: Colors.white, size: 18),
-                              SizedBox(width: 6),
-                              Text(
-                                'Profil',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).pop();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const AnnouncementsPage(),
-                            ),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.white24),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              Icon(
-                                Icons.campaign,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                              SizedBox(width: 6),
-                              Text(
-                                'Duyurular',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).pop();
                           _showMessage('Instagram');
                         },
                         child: Container(
@@ -443,7 +477,11 @@ class _HomePageState extends State<HomePage> {
                       GestureDetector(
                         onTap: () {
                           Navigator.of(context).pop();
-                          _showMessage('Favoriler yakında.');
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const FavoriteQuestionsPage(),
+                            ),
+                          );
                         },
                         child: Container(
                           padding: const EdgeInsets.symmetric(
@@ -476,25 +514,7 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('Ana Sayfa'),
-              onTap: () {
-                Navigator.of(context).pop();
-                setState(() {
-                  _currentIndex = 0;
-                });
-              },
-            ),
-            SwitchListTile(
-              secondary: const Icon(Icons.dark_mode_outlined),
-              title: const Text('Koyu Tema'),
-              value: isDark,
-              onChanged: (_) {
-                Navigator.of(context).pop();
-                widget.onThemeToggle();
-              },
-            ),
+            // Sıra: Duyurular, E-Sınav, Ders Videoları
             ListTile(
               leading: const Icon(Icons.campaign),
               title: const Text('Duyurular'),
@@ -505,6 +525,25 @@ class _HomePageState extends State<HomePage> {
                 );
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.map_outlined),
+              title: const Text('E-Sınav Sonuç Sayfası'),
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const MebMapPage()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.play_circle_outline),
+              title: const Text('Ders Videoları'),
+              onTap: () {
+                Navigator.of(context).pop();
+                _showMessage('Ders videoları yakında eklenecek.');
+              },
+            ),
+            const Divider(),
             ListTile(
               leading: const Icon(Icons.privacy_tip_outlined),
               title: const Text('Gizlilik Şartları'),
@@ -525,7 +564,18 @@ class _HomePageState extends State<HomePage> {
                 ).push(MaterialPageRoute(builder: (_) => const FAQPage()));
               },
             ),
-            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.favorite_outline),
+              title: const Text('Favori Sorularım'),
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const FavoriteQuestionsPage(),
+                  ),
+                );
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.share_outlined),
               title: const Text('Uygulamayı Paylaş'),
@@ -619,9 +669,14 @@ class _HomePageState extends State<HomePage> {
     const String femaleInstructorPhone = '905555555556';
 
     Future<void> openWhatsApp(String phone, String name) async {
-      final message = 'Merhaba $name, Trafik Koçu uygulamasından canlı/özel ders talep ediyorum.';
-      final uri = Uri.parse('https://wa.me/$phone?text=${Uri.encodeComponent(message)}');
-      final deep = Uri.parse('whatsapp://send?phone=$phone&text=${Uri.encodeComponent(message)}');
+      final message =
+          'Merhaba $name, Trafik Koçu uygulamasından canlı/özel ders talep ediyorum.';
+      final uri = Uri.parse(
+        'https://wa.me/$phone?text=${Uri.encodeComponent(message)}',
+      );
+      final deep = Uri.parse(
+        'whatsapp://send?phone=$phone&text=${Uri.encodeComponent(message)}',
+      );
       if (await canLaunchUrl(deep)) {
         final ok = await launchUrl(deep, mode: LaunchMode.externalApplication);
         if (ok) return;
@@ -631,11 +686,17 @@ class _HomePageState extends State<HomePage> {
         if (ok) return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('WhatsApp açılamadı. Lütfen gerçek cihazda deneyin.')),
+        const SnackBar(
+          content: Text('WhatsApp açılamadı. Lütfen gerçek cihazda deneyin.'),
+        ),
       );
     }
 
-    Widget person({required String assetPath, required String name, required String phone}) {
+    Widget person({
+      required String assetPath,
+      required String name,
+      required String phone,
+    }) {
       final ValueNotifier<double> scale = ValueNotifier<double>(1.0);
       final ValueNotifier<bool> hovered = ValueNotifier<bool>(false);
       return Expanded(
@@ -666,20 +727,29 @@ class _HomePageState extends State<HomePage> {
                       return AnimatedContainer(
                         duration: const Duration(milliseconds: 180),
                         curve: Curves.easeOut,
-                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 16,
+                          horizontal: 14,
+                        ),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF20262F) : Colors.white,
+                          color: isDark
+                              ? const Color(0xFF20262F)
+                              : Colors.white,
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: isDark
                               ? null
                               : [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(h ? 0.10 : 0.06),
+                                    color: Colors.black.withOpacity(
+                                      h ? 0.10 : 0.06,
+                                    ),
                                     blurRadius: h ? 22 : 16,
                                     offset: const Offset(0, 8),
                                   ),
                                 ],
-                          border: Border.all(color: isDark ? Colors.white12 : Colors.black12),
+                          border: Border.all(
+                            color: isDark ? Colors.white12 : Colors.black12,
+                          ),
                         ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -712,7 +782,9 @@ class _HomePageState extends State<HomePage> {
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,
-                                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                color: isDark
+                                    ? Colors.white
+                                    : const Color(0xFF0F172A),
                                 letterSpacing: 0.2,
                               ),
                               textAlign: TextAlign.center,
@@ -725,14 +797,19 @@ class _HomePageState extends State<HomePage> {
                                 icon: SizedBox(
                                   width: 18,
                                   height: 18,
-                                  child: Image.asset('lib/assests/logo/whatsapp.png', fit: BoxFit.contain),
+                                  child: Image.asset(
+                                    'lib/assests/logo/whatsapp.png',
+                                    fit: BoxFit.contain,
+                                  ),
                                 ),
                                 label: const Text('WhatsApp'),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF25D366),
                                   foregroundColor: Colors.white,
                                   elevation: 0,
-                                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(999),
                                   ),
@@ -757,16 +834,24 @@ class _HomePageState extends State<HomePage> {
       decoration: BoxDecoration(
         gradient: isDark
             ? const LinearGradient(
-                colors: [Color(0xFF1E1B4B), Color(0xFF312E81), Color(0xFF3B0764)],
+                colors: [
+                  Color(0xFF1E1B4B),
+                  Color(0xFF312E81),
+                  Color(0xFF3B0764),
+                ],
                 stops: [0.0, 0.55, 1.0],
-                begin: Alignment( -0.9, -1.0),
-                end: Alignment( 0.9, 1.0),
+                begin: Alignment(-0.9, -1.0),
+                end: Alignment(0.9, 1.0),
               )
             : const LinearGradient(
-                colors: [Color(0xFF7C3AED), Color(0xFFE879F9), Color(0xFFFB7185)],
+                colors: [
+                  Color(0xFF7C3AED),
+                  Color(0xFFE879F9),
+                  Color(0xFFFB7185),
+                ],
                 stops: [0.0, 0.5, 1.0],
-                begin: Alignment( -1.0, -0.8),
-                end: Alignment( 1.0, 0.8),
+                begin: Alignment(-1.0, -0.8),
+                end: Alignment(1.0, 0.8),
               ),
         borderRadius: BorderRadius.circular(20),
       ),
@@ -788,7 +873,11 @@ class _HomePageState extends State<HomePage> {
                     color: Colors.white.withOpacity(0.18),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.video_call_rounded, color: Colors.white, size: 26),
+                  child: const Icon(
+                    Icons.video_call_rounded,
+                    color: Colors.white,
+                    size: 26,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -807,10 +896,7 @@ class _HomePageState extends State<HomePage> {
                       SizedBox(height: 4),
                       Text(
                         'Eğitmenlerimizle WhatsApp üzerinden anında iletişim kurun',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white70,
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.white70),
                       ),
                     ],
                   ),
@@ -820,9 +906,17 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 16),
             Row(
               children: [
-                person(assetPath: 'lib/assests/ManWoman/man.png', name: maleInstructorName, phone: maleInstructorPhone),
+                person(
+                  assetPath: 'lib/assests/ManWoman/man.png',
+                  name: maleInstructorName,
+                  phone: maleInstructorPhone,
+                ),
                 const SizedBox(width: 12),
-                person(assetPath: 'lib/assests/ManWoman/woman.png', name: femaleInstructorName, phone: femaleInstructorPhone),
+                person(
+                  assetPath: 'lib/assests/ManWoman/woman.png',
+                  name: femaleInstructorName,
+                  phone: femaleInstructorPhone,
+                ),
               ],
             ),
           ],
@@ -830,8 +924,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
-  
 
   Widget _buildSocialMediaSection() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -854,7 +946,14 @@ class _HomePageState extends State<HomePage> {
           chipBg,
         ),
         const SizedBox(width: 8),
-        _buildActionChip(Icons.star, 'Favoriler', chipBg),
+        GestureDetector(
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const FavoriteQuestionsPage()),
+            );
+          },
+          child: _buildActionChip(Icons.star, 'Favoriler', chipBg),
+        ),
       ],
     );
   }
@@ -1027,173 +1126,191 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildTodayExamCard() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: isDark
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
-                  spreadRadius: 1,
-                  blurRadius: 2,
-                  offset: const Offset(0, 1),
+    return GestureDetector(
+      onTap: () async {
+        final data = await _getDailyQuestionData();
+        if (!mounted) return;
+        if (data.isEmpty) {
+          _showMessage('Günün sorusu yüklenemedi.');
+          return;
+        }
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => DailyQuestionPage(data: data)),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 2,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.red,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Image.asset(
+                  'lib/assests/icons/today_icon.png',
+                  fit: BoxFit.contain,
                 ),
-              ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.red,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Image.asset(
-                'lib/assests/icons/today_icon.png',
-                fit: BoxFit.contain,
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Günün Sınavı',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : Colors.black87,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Günün Sorusu',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Bugünün tarihine özel seçilmiş sınav',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  const SizedBox(height: 2),
+                  Text(
+                    'Her gün değişen rastgele soru',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Icon(
-            Icons.chevron_right,
-            color: isDark ? Colors.white : Colors.black54,
-          ),
-        ],
+            const SizedBox(width: 12),
+            Icon(
+              Icons.chevron_right,
+              color: isDark ? Colors.white : Colors.black54,
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildRandomExamCard() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: isDark
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
-                  spreadRadius: 1,
-                  blurRadius: 2,
-                  offset: const Offset(0, 1),
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const RandomAllQuizPage()));
+      },
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 2,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.blue,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Image.asset(
+                  'lib/assests/icons/random_signal.png',
+                  fit: BoxFit.contain,
                 ),
-              ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.blue,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Image.asset(
-                'lib/assests/icons/random_signal.png',
-                fit: BoxFit.contain,
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Rastgele Sınav',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : Colors.black87,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Rastgele Sınav',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Karışık sorularla kendini test et',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  const SizedBox(height: 2),
+                  Text(
+                    'Karışık sorularla kendini test et',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Icon(
-            Icons.chevron_right,
-            color: isDark ? Colors.white : Colors.black54,
-          ),
-        ],
+            const SizedBox(width: 12),
+            Icon(
+              Icons.chevron_right,
+              color: isDark ? Colors.white : Colors.black54,
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  
-
   Widget _buildBottomCategoriesGrid() {
     final bottomCategories = [
       CategoryItem(
-        title: 'Trafik ve Çevre',
-        subtitle: '',
+        title: 'Trafik ve Çevre Bilgisi',
+        subtitle: 'kategori=Trafik ve Çevre Bilgisi',
         icon: Icons.traffic,
         color: Colors.red,
       ),
       CategoryItem(
-        title: 'İlk Yardım',
-        subtitle: '',
+        title: 'İlk Yardım Bilgisi',
+        subtitle: 'kategori=İlk Yardım Bilgisi',
         icon: Icons.medical_services,
         color: Colors.orange,
       ),
       CategoryItem(
-        title: 'Motor ve Araç Bakımı',
-        subtitle: '',
+        title: 'Araç Teknik',
+        subtitle: 'kategori=Araç Tekniği (Motor ve Araç Bakımı)',
         icon: Icons.build,
         color: Colors.blue,
       ),
       CategoryItem(
-        title: 'Dersler',
-        subtitle: '',
-        icon: Icons.menu_book,
-        color: Colors.red,
+        title: 'Trafik Adabı',
+        subtitle: 'kategori=Trafik Adabı',
+        icon: Icons.handshake,
+        color: Colors.purple,
       ),
     ];
 
@@ -1214,62 +1331,18 @@ class _HomePageState extends State<HomePage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () {
-        if (category.title == 'Trafik ve Çevre') {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const PdfViewerPage(
-                assetPath: 'lib/assests/pdfs/trafikvecevredersi.pdf',
-                title: 'Trafik ve Çevre',
-              ),
+        // subtitle encodes the kategori name
+        final String kategori = category.subtitle.replaceFirst('kategori=', '');
+        final int count = _inferCountFromTitle(category.title);
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => RandomCategoryQuizPage(
+              title: category.title,
+              kategori: kategori,
+              questionCount: count,
             ),
-          );
-        } else if (category.title == 'İlk Yardım') {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const PdfViewerPage(
-                assetPath: 'lib/assests/pdfs/ilkyardim.pdf',
-                title: 'İlk Yardım',
-              ),
-            ),
-          );
-        } else if (category.title == 'Motor ve Araç Bakımı') {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const PdfViewerPage(
-                assetPath: 'lib/assests/pdfs/motor.pdf',
-                title: 'Motor ve Araç Bakımı',
-              ),
-            ),
-          );
-        } else if (category.title == 'Dersler') {
-          final uri = Uri.parse(
-            'https://www.youtube.com/playlist?list=PLHR4VqMThT7m-oZQJoNiBonWuJU2pxl6G',
-          );
-          launchUrl(uri, mode: LaunchMode.externalApplication)
-              .then((ok) {
-                if (ok) return true;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Bağlantı açılamadı.')),
-                );
-                return false;
-              })
-              .catchError((_) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Bağlantı açılamadı.')),
-                );
-                return false;
-              });
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${category.title} kategorisi seçildi'),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          );
-        }
+          ),
+        );
       },
       child: Container(
         height: 120,
@@ -1335,14 +1408,26 @@ class _HomePageState extends State<HomePage> {
                     )
                   : Icon(category.icon, color: Colors.white, size: 20),
             ),
-            Text(
-              category.title,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : Colors.black87,
-              ),
-              textAlign: TextAlign.center,
+            Column(
+              children: [
+                Text(
+                  category.title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                if (category.subtitle.startsWith('kategori='))
+                  Text(
+                    category.subtitle.replaceFirst('kategori=', ''),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
+                  ),
+              ],
             ),
           ],
         ),
@@ -1395,4 +1480,25 @@ class CategoryItem {
     required this.icon,
     required this.color,
   });
+}
+
+int _inferCountFromTitle(String title) {
+  // If title contains explicit count like "23 soru" parse it; otherwise map defaults
+  final match = RegExp(r'(\d+)\s*soru').firstMatch(title);
+  if (match != null) {
+    return int.tryParse(match.group(1)!) ?? 10;
+  }
+  switch (title) {
+    case 'Trafik ve Çevre Bilgisi':
+      return 23;
+    case 'İlk Yardım Bilgisi':
+      return 12;
+    case 'Araç Teknik':
+    case 'Araç Tekniği (Motor ve Araç Bakımı)':
+      return 9;
+    case 'Trafik Adabı':
+      return 6;
+    default:
+      return 10;
+  }
 }

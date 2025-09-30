@@ -163,7 +163,12 @@ class _QuizQuestionsPageState extends State<QuizQuestionsPage> {
             } catch (_) {}
           }();
 
-          return _QuestionFlow(docs: docs, yil: widget.yil, ay: widget.ay, gun: widget.gun);
+          return _QuestionFlow(
+            docs: docs,
+            yil: widget.yil,
+            ay: widget.ay,
+            gun: widget.gun,
+          );
         },
       ),
     );
@@ -175,7 +180,12 @@ class _QuestionFlow extends StatefulWidget {
   final int yil;
   final String ay;
   final int gun;
-  const _QuestionFlow({required this.docs, required this.yil, required this.ay, required this.gun});
+  const _QuestionFlow({
+    required this.docs,
+    required this.yil,
+    required this.ay,
+    required this.gun,
+  });
 
   @override
   State<_QuestionFlow> createState() => _QuestionFlowState();
@@ -189,7 +199,9 @@ class _QuestionFlowState extends State<_QuestionFlow> {
   int _wrongCount = 0;
   Duration _remaining = const Duration(minutes: 45);
   Timer? _timer;
-  
+  bool _isReviewMode = false;
+  List<int> _reviewIndices = <int>[];
+
   // Persisted state per question
   late List<int?> _selectedOptionsByIndex;
   late List<bool> _lockedByIndex;
@@ -212,11 +224,19 @@ class _QuestionFlowState extends State<_QuestionFlow> {
     });
   }
 
+  // reserved for potential future global favorite usage
+
   Widget _buildMetaChips(String kategori) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color chipBg = isDark ? const Color(0xFF2E2A57) : const Color(0xFFEDE9FE);
-    final Color chipBorder = isDark ? const Color(0xFF5B56A6) : const Color(0xFFDAD5FB);
-    final Color chipText = isDark ? const Color(0xFFCAC4FF) : const Color(0xFF4F46E5);
+    final Color chipBg = isDark
+        ? const Color(0xFF2E2A57)
+        : const Color(0xFFEDE9FE);
+    final Color chipBorder = isDark
+        ? const Color(0xFF5B56A6)
+        : const Color(0xFFDAD5FB);
+    final Color chipText = isDark
+        ? const Color(0xFFCAC4FF)
+        : const Color(0xFF4F46E5);
 
     final List<Widget> chips = [];
     if (kategori.isNotEmpty) {
@@ -224,7 +244,14 @@ class _QuestionFlowState extends State<_QuestionFlow> {
         Chip(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
           avatar: Icon(Icons.folder_open, size: 16, color: chipText),
-          label: Text(kategori, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: chipText)),
+          label: Text(
+            kategori,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: chipText,
+            ),
+          ),
           backgroundColor: chipBg,
           shape: StadiumBorder(side: BorderSide(color: chipBorder)),
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -237,19 +264,28 @@ class _QuestionFlowState extends State<_QuestionFlow> {
       Chip(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
         avatar: Icon(Icons.confirmation_number, size: 16, color: chipText),
-        label: Text('Soru ${_index + 1}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: chipText)),
-        backgroundColor: isDark ? const Color(0xFF0F766E) : const Color(0xFFD1FAE5),
-        shape: StadiumBorder(side: BorderSide(color: isDark ? const Color(0xFF115E59) : const Color(0xFFA7F3D0))),
+        label: Text(
+          'Soru ${_index + 1}',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: chipText,
+          ),
+        ),
+        backgroundColor: isDark
+            ? const Color(0xFF0F766E)
+            : const Color(0xFFD1FAE5),
+        shape: StadiumBorder(
+          side: BorderSide(
+            color: isDark ? const Color(0xFF115E59) : const Color(0xFFA7F3D0),
+          ),
+        ),
         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
       ),
     );
 
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: chips,
-    );
+    return Wrap(spacing: 8, runSpacing: 8, children: chips);
   }
 
   Future<void> _restoreExamProgress() async {
@@ -267,7 +303,7 @@ class _QuestionFlowState extends State<_QuestionFlow> {
             _lockedByIndex[i] = false; // Don't lock if no answer
           }
         }
-        
+
         // Find the first unanswered question
         int firstUnansweredIndex = 0;
         for (int i = 0; i < _lockedByIndex.length; i++) {
@@ -276,7 +312,7 @@ class _QuestionFlowState extends State<_QuestionFlow> {
             break;
           }
         }
-        
+
         setState(() {
           _index = firstUnansweredIndex;
           _selectedOption = _selectedOptionsByIndex[_index];
@@ -299,24 +335,44 @@ class _QuestionFlowState extends State<_QuestionFlow> {
   }
 
   void _next() {
-    if (_index < widget.docs.length - 1) {
-      setState(() {
-        _index++;
-        // Restore persisted state for next question
-        _selectedOption = _selectedOptionsByIndex[_index];
-        _locked = _lockedByIndex[_index];
-      });
+    if (_isReviewMode) {
+      final pos = _reviewIndices.indexOf(_index);
+      if (pos >= 0 && pos < _reviewIndices.length - 1) {
+        setState(() {
+          _index = _reviewIndices[pos + 1];
+          _selectedOption = _selectedOptionsByIndex[_index];
+          _locked = _lockedByIndex[_index];
+        });
+      }
+    } else {
+      if (_index < widget.docs.length - 1) {
+        setState(() {
+          _index++;
+          _selectedOption = _selectedOptionsByIndex[_index];
+          _locked = _lockedByIndex[_index];
+        });
+      }
     }
   }
 
   void _prev() {
-    if (_index > 0) {
-      setState(() {
-        _index--;
-        // Restore persisted state for previous question
-        _selectedOption = _selectedOptionsByIndex[_index];
-        _locked = _lockedByIndex[_index];
-      });
+    if (_isReviewMode) {
+      final pos = _reviewIndices.indexOf(_index);
+      if (pos > 0) {
+        setState(() {
+          _index = _reviewIndices[pos - 1];
+          _selectedOption = _selectedOptionsByIndex[_index];
+          _locked = _lockedByIndex[_index];
+        });
+      }
+    } else {
+      if (_index > 0) {
+        setState(() {
+          _index--;
+          _selectedOption = _selectedOptionsByIndex[_index];
+          _locked = _lockedByIndex[_index];
+        });
+      }
     }
   }
 
@@ -342,7 +398,181 @@ class _QuestionFlowState extends State<_QuestionFlow> {
     _wrongCount = wrong;
   }
 
-  Future<void> _recordSolvedIfNeeded(int questionIndex, int selectedIndex, int correctIndex) async {
+  int get _blankCount {
+    final answered = _lockedByIndex.where((e) => e).length;
+    return widget.docs.length - answered;
+  }
+
+  List<int> _collectWrongIndices() {
+    final List<int> wrongs = <int>[];
+    for (int i = 0; i < widget.docs.length; i++) {
+      final d = widget.docs[i].data();
+      final int answerIndex = d['cevap'] is int
+          ? d['cevap'] as int
+          : int.tryParse('${d['cevap']}') ?? -1;
+      final sel = _selectedOptionsByIndex[i];
+      final isLocked = _lockedByIndex[i];
+      if (isLocked && sel != null && sel != answerIndex) {
+        wrongs.add(i);
+      }
+    }
+    return wrongs;
+  }
+
+  void _enterReviewWrong() {
+    final wrongs = _collectWrongIndices();
+    if (wrongs.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Yanlış soru yok.')));
+      return;
+    }
+    setState(() {
+      _isReviewMode = true;
+      _reviewIndices = wrongs;
+      _index = wrongs.first;
+      _selectedOption = _selectedOptionsByIndex[_index];
+      _locked = _lockedByIndex[_index];
+    });
+  }
+
+  void _exitReviewMode() {
+    setState(() {
+      _isReviewMode = false;
+      _reviewIndices = <int>[];
+    });
+  }
+
+  void _finishExam() {
+    _recalculateStats();
+    final total = widget.docs.length;
+    final success = total > 0 ? _correctCount / total : 0.0;
+    final isRisk = success < 0.70;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(20, 16, 16, 0),
+          contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          title: Row(
+            children: [
+              const Text(
+                'Sınav Özeti',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              ),
+              const Spacer(),
+              if (isRisk)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: Colors.orange),
+                  ),
+                  child: const Text(
+                    'Riskli',
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _statChip(
+                      Icons.check_circle,
+                      'Doğru',
+                      _correctCount,
+                      Colors.green,
+                    ),
+                    _statChip(Icons.cancel, 'Yanlış', _wrongCount, Colors.red),
+                    _statChip(
+                      Icons.help_outline,
+                      'Boş',
+                      _blankCount,
+                      Colors.grey,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    '%${(success * 100).round()}',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      _enterReviewWrong();
+                    },
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Yanlışları Gör ve Düzelt'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Kapat'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _statChip(IconData icon, String label, int value, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 6),
+          Text(
+            '$label: $value',
+            style: TextStyle(color: color, fontWeight: FontWeight.w800),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _recordSolvedIfNeeded(
+    int questionIndex,
+    int selectedIndex,
+    int correctIndex,
+  ) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final solved = prefs.getStringList('solved_questions') ?? <String>[];
@@ -353,7 +583,7 @@ class _QuestionFlowState extends State<_QuestionFlow> {
         solved.add(key);
         await prefs.setStringList('solved_questions', solved);
       }
-      
+
       // Save per-exam answers list (only save valid answers, use -1 for unanswered)
       final answers = List<String>.generate(widget.docs.length, (i) {
         if (_lockedByIndex[i] && _selectedOptionsByIndex[i] != null) {
@@ -362,7 +592,7 @@ class _QuestionFlowState extends State<_QuestionFlow> {
         return '-1'; // -1 means unanswered
       });
       await prefs.setStringList('answers_' + _examKey, answers);
-      
+
       // Save per-exam solved count (only count actually answered questions)
       final solvedCount = _lockedByIndex.where((e) => e).length;
       await prefs.setInt('exam_solved_' + _examKey, solvedCount);
@@ -379,9 +609,10 @@ class _QuestionFlowState extends State<_QuestionFlow> {
     final int cevapIndex = d['cevap'] is int
         ? d['cevap'] as int
         : int.tryParse('${d['cevap']}') ?? -1;
-    
+
     // New data structure support
-    final List<dynamic> soruResimleri = (d['soru_resimleri'] ?? []) as List<dynamic>;
+    final List<dynamic> soruResimleri =
+        (d['soru_resimleri'] ?? []) as List<dynamic>;
     final String soruVideosu = (d['soru_videosu'] ?? '').toString();
     final String kategori = (d['kategori'] ?? '').toString();
 
@@ -390,7 +621,8 @@ class _QuestionFlowState extends State<_QuestionFlow> {
     final total = widget.docs.length;
     final progress = (_index + 1) / total;
     String two(int n) => n.toString().padLeft(2, '0');
-    final timerText = '${two(_remaining.inMinutes.remainder(60))}:${two(_remaining.inSeconds.remainder(60))}';
+    final timerText =
+        '${two(_remaining.inMinutes.remainder(60))}:${two(_remaining.inSeconds.remainder(60))}';
 
     return Column(
       children: [
@@ -399,32 +631,73 @@ class _QuestionFlowState extends State<_QuestionFlow> {
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
           child: Row(
             children: [
-              Text('(${_index + 1}/$total) Kalan', style: const TextStyle(fontWeight: FontWeight.w700)),
+              Text(
+                '(${_index + 1}/$total) Kalan',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
               const SizedBox(width: 12),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(color: Colors.green.withOpacity(0.15), borderRadius: BorderRadius.circular(999)),
-                child: Row(children: [
-                  const Icon(Icons.check_circle, color: Colors.green, size: 16),
-                  const SizedBox(width: 4),
-                  Text('$_correctCount', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.w700)),
-                ]),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.check_circle,
+                      color: Colors.green,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$_correctCount',
+                      style: const TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(color: Colors.red.withOpacity(0.12), borderRadius: BorderRadius.circular(999)),
-                child: Row(children: [
-                  const Icon(Icons.cancel, color: Colors.red, size: 16),
-                  const SizedBox(width: 4),
-                  Text('$_wrongCount', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w700)),
-                ]),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.cancel, color: Colors.red, size: 16),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$_wrongCount',
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(16)),
-                child: Text(timerText, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(
+                  timerText,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
             ],
           ),
@@ -447,21 +720,44 @@ class _QuestionFlowState extends State<_QuestionFlow> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2A2A2A) : Colors.white,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF2A2A2A)
+                        : Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       if (Theme.of(context).brightness != Brightness.dark)
-                        BoxShadow(color: Colors.black12.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 2)),
+                        BoxShadow(
+                          color: Colors.black12.withOpacity(0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
                     ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildMetaChips(kategori),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: _buildMetaChips(kategori)),
+                          const SizedBox(width: 8),
+                          _FavoriteButton(
+                            docs: widget.docs,
+                            index: _index,
+                            examKey: _examKey,
+                            onChanged: () {
+                              // optional: show feedback
+                            },
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 10),
                       Text(
                         soru,
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                       if (soruResimleri.isNotEmpty) ...[
                         const SizedBox(height: 12),
@@ -479,7 +775,9 @@ class _QuestionFlowState extends State<_QuestionFlow> {
                   final bool isSelected = _selectedOption == i;
                   final bool isCorrect = i == cevapIndex;
                   Color? tileColor;
-                  Color borderColor = isDark ? Colors.grey[700]! : Colors.grey[300]!;
+                  Color borderColor = isDark
+                      ? Colors.grey[700]!
+                      : Colors.grey[300]!;
                   IconData? leadingIcon;
 
                   if (_locked) {
@@ -493,7 +791,8 @@ class _QuestionFlowState extends State<_QuestionFlow> {
                       leadingIcon = Icons.cancel;
                     }
                   } else if (isSelected) {
-                    tileColor = (isDark ? Colors.white : Colors.black).withOpacity(0.06);
+                    tileColor = (isDark ? Colors.white : Colors.black)
+                        .withOpacity(0.06);
                   }
 
                   final letter = String.fromCharCode('A'.codeUnitAt(0) + i);
@@ -512,7 +811,8 @@ class _QuestionFlowState extends State<_QuestionFlow> {
                           shape: BoxShape.circle,
                           border: Border.all(color: borderColor, width: 2),
                           color: leadingIcon != null
-                              ? (isCorrect ? Colors.green : Colors.red).withOpacity(0.15)
+                              ? (isCorrect ? Colors.green : Colors.red)
+                                    .withOpacity(0.15)
                               : null,
                         ),
                         alignment: Alignment.center,
@@ -527,18 +827,51 @@ class _QuestionFlowState extends State<_QuestionFlow> {
                         ),
                       ),
                       title: _buildAnswerContent(cevaplar[i]),
-                  onTap: () async {
-                    if (_locked) return;
+                      onTap: () async {
+                        if (_locked && !_isReviewMode) return;
                         setState(() {
-                      // Persist selection for this question
-                      _selectedOption = i;
-                      _locked = true;
-                      _selectedOptionsByIndex[_index] = i;
-                      _lockedByIndex[_index] = true;
-                      // Recalculate stats from persisted answers
-                      _recalculateStats();
+                          // Persist selection for this question
+                          _selectedOption = i;
+                          _locked = true;
+                          _selectedOptionsByIndex[_index] = i;
+                          _lockedByIndex[_index] = true;
+                          // Recalculate stats from persisted answers
+                          _recalculateStats();
                         });
-                    await _recordSolvedIfNeeded(_index, i, cevapIndex);
+                        await _recordSolvedIfNeeded(_index, i, cevapIndex);
+                        if (_isReviewMode) {
+                          final d = widget.docs[_index].data();
+                          final int correctIndex = d['cevap'] is int
+                              ? d['cevap'] as int
+                              : int.tryParse('${d['cevap']}') ?? -1;
+                          // If corrected, remove from review list and move on
+                          if (_selectedOptionsByIndex[_index] == correctIndex) {
+                            final pos = _reviewIndices.indexOf(_index);
+                            if (pos != -1) {
+                              _reviewIndices.removeAt(pos);
+                              if (_reviewIndices.isEmpty) {
+                                _exitReviewMode();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Tüm yanlışlar düzeltildi.'),
+                                  ),
+                                );
+                              } else {
+                                // Move to next remaining wrong if possible
+                                if (pos < _reviewIndices.length) {
+                                  _index = _reviewIndices[pos];
+                                } else {
+                                  _index = _reviewIndices.last;
+                                }
+                                setState(() {
+                                  _selectedOption =
+                                      _selectedOptionsByIndex[_index];
+                                  _locked = _lockedByIndex[_index];
+                                });
+                              }
+                            }
+                          }
+                        }
                       },
                     ),
                   );
@@ -561,16 +894,19 @@ class _QuestionFlowState extends State<_QuestionFlow> {
               const SizedBox(width: 8),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Bitir'),
+                  onPressed: _finishExam,
+                  child: const Text('Sınavı Bitir'),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: _index < widget.docs.length - 1 ? _next : null,
+                  onPressed: _isReviewMode
+                      ? (_reviewIndices.indexOf(_index) <
+                                _reviewIndices.length - 1
+                            ? _next
+                            : null)
+                      : (_index < widget.docs.length - 1 ? _next : null),
                   icon: const Icon(Icons.navigate_next),
                   label: const Text('Sonraki'),
                 ),
@@ -578,6 +914,18 @@ class _QuestionFlowState extends State<_QuestionFlow> {
             ],
           ),
         ),
+        if (_isReviewMode)
+          SafeArea(
+            minimum: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            child: Align(
+              alignment: Alignment.bottomLeft,
+              child: TextButton.icon(
+                onPressed: _exitReviewMode,
+                icon: const Icon(Icons.list_alt_outlined),
+                label: const Text('Tüm Sorulara Dön'),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -587,7 +935,7 @@ class _QuestionFlowState extends State<_QuestionFlow> {
       // New data structure: {metin: "...", resim_url: "..."}
       final String metin = cevap['metin'] ?? '';
       final String resimUrl = cevap['resim_url'] ?? '';
-      
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -609,7 +957,11 @@ class _QuestionFlowState extends State<_QuestionFlow> {
                   fit: BoxFit.contain,
                   filterQuality: FilterQuality.medium,
                   errorBuilder: (context, error, stackTrace) {
-                    return const Icon(Icons.image_not_supported, color: Colors.grey, size: 40);
+                    return const Icon(
+                      Icons.image_not_supported,
+                      color: Colors.grey,
+                      size: 40,
+                    );
                   },
                   loadingBuilder: (context, child, loadingProgress) {
                     if (loadingProgress == null) return child;
@@ -631,10 +983,12 @@ class _QuestionFlowState extends State<_QuestionFlow> {
   }
 
   Widget _buildQuestionImages(List<dynamic> resimler) {
-    final validResimler = resimler.where((url) => url.toString().isNotEmpty).toList();
-    
+    final validResimler = resimler
+        .where((url) => url.toString().isNotEmpty)
+        .toList();
+
     if (validResimler.isEmpty) return const SizedBox.shrink();
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -670,7 +1024,10 @@ class _QuestionFlowState extends State<_QuestionFlow> {
                           color: Colors.grey[300],
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.image_not_supported, color: Colors.grey),
+                        child: const Icon(
+                          Icons.image_not_supported,
+                          color: Colors.grey,
+                        ),
                       );
                     },
                     loadingBuilder: (context, child, loadingProgress) {
@@ -682,9 +1039,7 @@ class _QuestionFlowState extends State<_QuestionFlow> {
                           color: Colors.grey[300],
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Center(
-                          child: CircularProgressIndicator(),
-                        ),
+                        child: const Center(child: CircularProgressIndicator()),
                       );
                     },
                   ),
@@ -722,6 +1077,77 @@ class _QuestionFlowState extends State<_QuestionFlow> {
   }
 }
 
+class _FavoriteButton extends StatefulWidget {
+  final List<QueryDocumentSnapshot<Map<String, dynamic>>> docs;
+  final int index;
+  final String examKey;
+  final VoidCallback onChanged;
+  const _FavoriteButton({
+    required this.docs,
+    required this.index,
+    required this.examKey,
+    required this.onChanged,
+  });
+
+  @override
+  State<_FavoriteButton> createState() => _FavoriteButtonState();
+}
+
+class _FavoriteButtonState extends State<_FavoriteButton> {
+  bool _isFav = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final list = prefs.getStringList('favorite_questions') ?? <String>[];
+      final soruId = widget.docs[widget.index].id.toString();
+      final favKey = widget.examKey + '-' + soruId;
+      if (mounted) setState(() => _isFav = list.contains(favKey));
+    } catch (_) {}
+  }
+
+  Future<void> _toggle() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final list = prefs.getStringList('favorite_questions') ?? <String>[];
+      final soruId = widget.docs[widget.index].id.toString();
+      final favKey = widget.examKey + '-' + soruId;
+      if (list.contains(favKey)) {
+        list.remove(favKey);
+        _isFav = false;
+      } else {
+        list.add(favKey);
+        _isFav = true;
+      }
+      await prefs.setStringList('favorite_questions', list);
+      if (mounted) setState(() {});
+      widget.onChanged();
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: _isFav ? 'Favoriden çıkar' : 'Favorilere ekle',
+      onPressed: _toggle,
+      icon: Icon(
+        _isFav ? Icons.favorite : Icons.favorite_border,
+        color: _isFav
+            ? Colors.red
+            : (Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white70
+                  : Colors.black45),
+      ),
+    );
+  }
+}
+
 class QuestionVideoPlayer extends StatefulWidget {
   final String url;
   const QuestionVideoPlayer({super.key, required this.url});
@@ -745,7 +1171,9 @@ class _QuestionVideoPlayerState extends State<QuestionVideoPlayer> {
     if (_initTried) return;
     _initTried = true;
     try {
-      final videoController = VideoPlayerController.networkUrl(Uri.parse(widget.url));
+      final videoController = VideoPlayerController.networkUrl(
+        Uri.parse(widget.url),
+      );
       await videoController.initialize();
       final chewie = ChewieController(
         videoPlayerController: videoController,
