@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'dart:math';
 import 'pages/profile_page.dart';
 import 'pages/announcements_page.dart';
 import 'pages/privacy_page.dart';
@@ -127,102 +125,94 @@ class _HomePageState extends State<HomePage> {
 
   Future<Map<String, dynamic>> _getDailyQuestionData() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final todayKey = DateTime.now().toIso8601String().substring(0, 10);
-      final cachedKey = prefs.getString('daily_q_key');
-      final cachedData = prefs.getString('daily_q_data');
-      if (cachedKey == todayKey && cachedData != null) {
-        return jsonDecode(cachedData) as Map<String, dynamic>;
+      // Tüm soruları getir ve en güncel tarihli sınavı bul
+      final snap = await FirebaseFirestore.instance.collection('sorular').get();
+
+      if (snap.docs.isEmpty) {
+        print('No questions found in Firestore');
+        return {};
       }
 
-      final snap = await FirebaseFirestore.instance.collection('sorular').get();
-      if (snap.docs.isEmpty) return {};
-      final rng = Random();
-      final doc = snap.docs[rng.nextInt(snap.docs.length)];
-      final data = doc.data();
+      final docs = snap.docs.map((e) => e.data()).toList();
+
+      // En güncel tarihli sınavı bul
+      DateTime? latestDate;
+      List<Map<String, dynamic>> latestExamQuestions = [];
+
+      for (final doc in docs) {
+        final int yil = doc['yıl'] is int ? doc['yıl'] as int : 0;
+        final String ay = (doc['ay'] ?? '').toString();
+        final int gun = doc['gün'] is int ? doc['gün'] as int : 0;
+
+        if (yil > 0 && gun > 0) {
+          try {
+            // Ay string'ini ay numarasına çevir
+            int monthNumber = _getMonthNumber(ay);
+            if (monthNumber > 0) {
+              final examDate = DateTime(yil, monthNumber, gun);
+
+              if (latestDate == null || examDate.isAfter(latestDate)) {
+                latestDate = examDate;
+                // Bu tarihteki tüm soruları topla
+                latestExamQuestions = docs
+                    .where(
+                      (d) =>
+                          d['yıl'] == yil && d['ay'] == ay && d['gün'] == gun,
+                    )
+                    .toList();
+              }
+            }
+          } catch (e) {
+            print('Error parsing date for exam: $yil/$ay/$gun - $e');
+          }
+        }
+      }
+
+      if (latestExamQuestions.isEmpty) {
+        print('No valid exam dates found');
+        return {};
+      }
+
+      print('Latest exam date: $latestDate');
+      print('Total questions in latest exam: ${latestExamQuestions.length}');
+
+      // En güncel sınavın tüm sorularını döndür
       final result = <String, dynamic>{
-        'soru': (data['soru'] ?? '').toString(),
-        'cevaplar': (data['cevaplar'] ?? []),
-        'cevap': data['cevap'],
+        'totalQuestions': latestExamQuestions.length,
+        'questions': latestExamQuestions
+            .map(
+              (q) => {
+                'soru': (q['soru'] ?? '').toString(),
+                'cevaplar': (q['cevaplar'] ?? []),
+                'cevap': q['cevap'],
+              },
+            )
+            .toList(),
       };
-      await prefs.setString('daily_q_key', todayKey);
-      await prefs.setString('daily_q_data', jsonEncode(result));
+
       return result;
-    } catch (_) {
+    } catch (e) {
+      print('Error getting latest exam data: $e');
       return {};
     }
   }
 
-  void _showDailyQuestionDialog(Map<String, dynamic> d) {
-    if (d.isEmpty) {
-      _showMessage('Günün sorusu yüklenemedi.');
-      return;
-    }
-    final String soru = (d['soru'] ?? '').toString();
-    final List<dynamic> cevaplar = (d['cevaplar'] ?? []) as List<dynamic>;
-    final int cevapIndex = d['cevap'] is int
-        ? d['cevap'] as int
-        : int.tryParse('${d['cevap']}') ?? -1;
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          title: const Text('Günün Sorusu'),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(soru, style: const TextStyle(fontWeight: FontWeight.w800)),
-                const SizedBox(height: 12),
-                ...List.generate(cevaplar.length, (i) {
-                  final String text = cevaplar[i] is Map<String, dynamic>
-                      ? ((cevaplar[i] as Map<String, dynamic>)['metin'] ?? '')
-                            .toString()
-                      : cevaplar[i].toString();
-                  final String letter = String.fromCharCode(
-                    'A'.codeUnitAt(0) + i,
-                  );
-                  final bool isCorrect = i == cevapIndex;
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    decoration: BoxDecoration(
-                      color: isCorrect ? Colors.green.withOpacity(0.10) : null,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: isCorrect ? Colors.green : Colors.grey.shade300,
-                      ),
-                    ),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: isCorrect
-                            ? Colors.green.withOpacity(0.15)
-                            : null,
-                        foregroundColor: isCorrect ? Colors.green : null,
-                        child: Text(letter),
-                      ),
-                      title: Text(text),
-                      trailing: isCorrect
-                          ? const Icon(Icons.check_circle, color: Colors.green)
-                          : null,
-                    ),
-                  );
-                }),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Kapat'),
-            ),
-          ],
-        );
-      },
-    );
+  int _getMonthNumber(String monthName) {
+    final months = {
+      'Ocak': 1,
+      'Şubat': 2,
+      'Mart': 3,
+      'Nisan': 4,
+      'Mayıs': 5,
+      'Haziran': 6,
+      'Temmuz': 7,
+      'Ağustos': 8,
+      'Eylül': 9,
+      'Ekim': 10,
+      'Kasım': 11,
+      'Aralık': 12,
+    };
+    return months[monthName] ?? 0;
   }
 
   Future<void> _loadProgress() async {
@@ -1216,15 +1206,41 @@ class _HomePageState extends State<HomePage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () async {
-        final data = await _getDailyQuestionData();
-        if (!mounted) return;
-        if (data.isEmpty) {
-          _showMessage('Günün sorusu yüklenemedi.');
-          return;
+        try {
+          final data = await _getDailyQuestionData();
+          if (!mounted) return;
+          if (data.isEmpty) {
+            _showMessage('Günün sınavı yüklenemedi.');
+            return;
+          }
+          print(
+            'Navigating to latest exam with ${data['totalQuestions']} questions',
+          );
+
+          // En son eklenen soruları direkt QuizQuestionsPage'e yönlendir
+          final questions = data['questions'] as List<dynamic>;
+
+          if (questions.isEmpty) {
+            _showMessage('Sınavda soru bulunamadı.');
+            return;
+          }
+
+          // En son eklenen soruları DailyQuestionPage'e yönlendir
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => DailyQuestionPage(
+                data: {
+                  'soru': 'En Son Eklenen Sorular',
+                  'cevaplar': questions,
+                  'cevap': 0,
+                },
+              ),
+            ),
+          );
+        } catch (e) {
+          print('Error in onTap: $e');
+          _showMessage('Günün sınavı yüklenemedi.');
         }
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => DailyQuestionPage(data: data)),
-        );
       },
       child: Container(
         padding: const EdgeInsets.all(14),
@@ -1267,7 +1283,7 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Günün Sorusu',
+                    'Günün Sınavı',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -1276,7 +1292,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Her gün değişen rastgele soru',
+                    'En güncel tarihli sınav',
                     style: TextStyle(
                       fontSize: 12,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],

@@ -5,8 +5,15 @@ import 'quiz_questions_page.dart';
 
 class AllQuestionsPage extends StatefulWidget {
   final VoidCallback? onProgressUpdated;
+  final bool isLatestExam;
+  final Map<String, dynamic>? latestExamData;
 
-  const AllQuestionsPage({super.key, this.onProgressUpdated});
+  const AllQuestionsPage({
+    super.key,
+    this.onProgressUpdated,
+    this.isLatestExam = false,
+    this.latestExamData,
+  });
 
   @override
   State<AllQuestionsPage> createState() => _AllQuestionsPageState();

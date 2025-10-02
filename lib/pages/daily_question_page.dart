@@ -58,7 +58,7 @@ class _DailyQuestionPageState extends State<DailyQuestionPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Günün Sorusu'), centerTitle: true),
+      appBar: AppBar(title: const Text('Günün Sınavı'), centerTitle: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -161,13 +161,6 @@ class _DailyQuestionPageState extends State<DailyQuestionPage> {
               );
             }),
             const SizedBox(height: 8),
-            if (_locked)
-              Text(
-                'Bu soru 24 saat boyunca sabit kalacak.',
-                style: TextStyle(
-                  color: isDark ? Colors.white70 : Colors.black54,
-                ),
-              ),
           ],
         ),
       ),

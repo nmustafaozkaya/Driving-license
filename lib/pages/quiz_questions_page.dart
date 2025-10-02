@@ -745,9 +745,6 @@ class _QuestionFlowState extends State<_QuestionFlow> {
                             docs: widget.docs,
                             index: _index,
                             examKey: _examKey,
-                            onChanged: () {
-                              // optional: show feedback
-                            },
                           ),
                         ],
                       ),
@@ -1081,12 +1078,10 @@ class _FavoriteButton extends StatefulWidget {
   final List<QueryDocumentSnapshot<Map<String, dynamic>>> docs;
   final int index;
   final String examKey;
-  final VoidCallback onChanged;
   const _FavoriteButton({
     required this.docs,
     required this.index,
     required this.examKey,
-    required this.onChanged,
   });
 
   @override
@@ -1099,7 +1094,18 @@ class _FavoriteButtonState extends State<_FavoriteButton> {
   @override
   void initState() {
     super.initState();
-    _load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _load();
+    });
+  }
+
+  @override
+  void didUpdateWidget(_FavoriteButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.index != widget.index ||
+        oldWidget.examKey != widget.examKey) {
+      _load();
+    }
   }
 
   Future<void> _load() async {
@@ -1118,16 +1124,18 @@ class _FavoriteButtonState extends State<_FavoriteButton> {
       final list = prefs.getStringList('favorite_questions') ?? <String>[];
       final soruId = widget.docs[widget.index].id.toString();
       final favKey = widget.examKey + '-' + soruId;
-      if (list.contains(favKey)) {
-        list.remove(favKey);
-        _isFav = false;
-      } else {
-        list.add(favKey);
-        _isFav = true;
-      }
+
+      setState(() {
+        if (list.contains(favKey)) {
+          list.remove(favKey);
+          _isFav = false;
+        } else {
+          list.add(favKey);
+          _isFav = true;
+        }
+      });
+
       await prefs.setStringList('favorite_questions', list);
-      if (mounted) setState(() {});
-      widget.onChanged();
     } catch (_) {}
   }
 
