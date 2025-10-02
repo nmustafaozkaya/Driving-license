@@ -88,6 +88,7 @@ flutter:
     - lib/data/
     - lib/traffic_signs/trafik/
     - lib/assests/police/
+    - lib/assests/vehicles/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
