@@ -374,309 +374,325 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-            Container(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-              decoration: BoxDecoration(
-                gradient: isDark
-                    ? const LinearGradient(
-                        colors: [Color(0xFF1F2A44), Color(0xFF2A2A2A)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      )
-                    : const LinearGradient(
-                        colors: [Color(0xFF1976D2), Color(0xFF42A5F5)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 26,
-                        backgroundColor: Colors.white24,
-                        child: Text(
-                          _userName.isNotEmpty
-                              ? _userName[0].toUpperCase()
-                              : 'K',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            color: Colors.white,
+              Container(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                decoration: BoxDecoration(
+                  gradient: isDark
+                      ? const LinearGradient(
+                          colors: [Color(0xFF1F2A44), Color(0xFF2A2A2A)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : const LinearGradient(
+                          colors: [Color(0xFF1976D2), Color(0xFF42A5F5)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 26,
+                          backgroundColor: Colors.white24,
+                          child: Text(
+                            _userName.isNotEmpty
+                                ? _userName[0].toUpperCase()
+                                : 'K',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _userName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(6),
-                              child: LinearProgressIndicator(
-                                minHeight: 8,
-                                value: _passProbability,
-                                backgroundColor: Colors.white24,
-                                valueColor: const AlwaysStoppedAnimation<Color>(
-                                  Colors.limeAccent,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _userName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '$_solvedQuestions/$_totalQuestions soru',
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
+                              const SizedBox(height: 6),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(6),
+                                child: LinearProgressIndicator(
+                                  minHeight: 8,
+                                  value: _passProbability,
+                                  backgroundColor: Colors.white24,
+                                  valueColor:
+                                      const AlwaysStoppedAnimation<Color>(
+                                        Colors.limeAccent,
+                                      ),
+                                ),
                               ),
-                            ),
-                            Text(
-                              '${(_passProbability * 100).round()}% tamamlandı',
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 10,
+                              const SizedBox(height: 4),
+                              Text(
+                                '$_solvedQuestions/$_totalQuestions soru',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                ),
                               ),
-                            ),
-                          ],
+                              Text(
+                                '${(_passProbability * 100).round()}% tamamlandı',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  GridView.count(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    childAspectRatio: 3.2,
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).pop();
-                          _showMessage('Instagram');
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.white24),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: ClipOval(
-                                  child: Image.asset(
-                                    'lib/assests/icons/instagram.png',
-                                    fit: BoxFit.cover,
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    GridView.count(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      childAspectRatio: 3.2,
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            _openInstagram();
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.white24),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: ClipOval(
+                                    child: Image.asset(
+                                      'lib/assests/icons/instagram.png',
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 6),
-                              const Text(
-                                'Instagram',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
+                                const SizedBox(width: 6),
+                                const Text(
+                                  'Instagram',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).pop();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const FavoriteQuestionsPage(),
+                              ],
                             ),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.white24),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              Icon(Icons.star, color: Colors.white, size: 18),
-                              SizedBox(width: 6),
-                              Text(
-                                'Favoriler',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const FavoriteQuestionsPage(),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.white24),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(Icons.star, color: Colors.white, size: 18),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Favoriler',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-            // Sıra: Duyurular, E-Sınav, Ders Videoları
-            ListTile(
-              leading: const Icon(Icons.local_police),
-              title: const Text('Polis İşaretleri'),
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const PoliceIsaretleriPage(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.speed),
-              title: const Text('Hız Kuralları'),
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const HizKurallariPage()),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.campaign),
-              title: const Text('Duyurular'),
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const AnnouncementsPage()),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.map_outlined),
-              title: const Text('E-Sınav Sonuç Sayfası'),
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(
-                  context,
-                ).push(MaterialPageRoute(builder: (_) => const MebMapPage()));
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.play_circle_outline),
-              title: const Text('Ders Videoları'),
-              onTap: () {
-                Navigator.of(context).pop();
-                _showMessage('Ders videoları yakında eklenecek.');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.shuffle),
-              title: const Text('Rastgele Sınav'),
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const RandomAllQuizPage()),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.warning),
-              title: const Text('Trafik İşaretleri'),
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const TrafficSignsPage()),
-                );
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.privacy_tip_outlined),
-              title: const Text('Gizlilik Şartları'),
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(
-                  context,
-                ).push(MaterialPageRoute(builder: (_) => const PrivacyPage()));
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.quiz_outlined),
-              title: const Text('Sıkça Sorulan Sorular'),
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(
-                  context,
-                ).push(MaterialPageRoute(builder: (_) => const FAQPage()));
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.favorite_outline),
-              title: const Text('Favori Sorularım'),
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const FavoriteQuestionsPage(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.share_outlined),
-              title: const Text('Uygulamayı Paylaş'),
-              onTap: () {
-                Navigator.of(context).pop();
-                _showMessage('Paylaşım özelliği yakında.');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.star_rate_outlined),
-              title: const Text('Uygulamayı Puanla'),
-              onTap: () {
-                Navigator.of(context).pop();
-                _showMessage('Puanlama özelliği yakında.');
-              },
-            ),
-            const Divider(height: 0),
-            ListTile(
-              leading: const Icon(Icons.info_outline),
-              title: const Text('Uygulama Hakkında'),
-              onTap: () {
-                Navigator.of(context).pop();
-                showAboutDialog(
-                  context: context,
-                  applicationName: 'Trafik Koçu',
-                  applicationVersion: '1.0.0',
-                  applicationLegalese: '© 2025',
-                );
-              },
-            ),
+              // Çizgi
+              Divider(
+                color: isDark ? Colors.grey[600] : Colors.grey[400],
+                thickness: 1.0,
+              ),
+              // Trafik İşaretleri Grubu
+              ListTile(
+                leading: const Icon(Icons.local_police),
+                title: const Text('Polis İşaretleri'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const PoliceIsaretleriPage(),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.speed),
+                title: const Text('Hız Kuralları'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const HizKurallariPage()),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.warning),
+                title: const Text('Trafik İşaretleri'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const TrafficSignsPage()),
+                  );
+                },
+              ),
+              // Çizgi
+              Divider(
+                color: isDark ? Colors.grey[600] : Colors.grey[400],
+                thickness: 1.0,
+              ),
+              // Diğer Menüler
+              ListTile(
+                leading: const Icon(Icons.campaign),
+                title: const Text('Duyurular'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const AnnouncementsPage(),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.map_outlined),
+                title: const Text('E-Sınav Sonuç Sayfası'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(
+                    context,
+                  ).push(MaterialPageRoute(builder: (_) => const MebMapPage()));
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.play_circle_outline),
+                title: const Text('Ders Videoları'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _showMessage('Ders videoları yakında eklenecek.');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.shuffle),
+                title: const Text('Rastgele Sınav'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const RandomAllQuizPage(),
+                    ),
+                  );
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.privacy_tip_outlined),
+                title: const Text('Gizlilik Şartları'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const PrivacyPage()),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.quiz_outlined),
+                title: const Text('Sıkça Sorulan Sorular'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(
+                    context,
+                  ).push(MaterialPageRoute(builder: (_) => const FAQPage()));
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.favorite_outline),
+                title: const Text('Favori Sorularım'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const FavoriteQuestionsPage(),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.share_outlined),
+                title: const Text('Uygulamayı Paylaş'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _showMessage('Paylaşım özelliği yakında.');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.star_rate_outlined),
+                title: const Text('Uygulamayı Puanla'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _showMessage('Puanlama özelliği yakında.');
+                },
+              ),
+              const Divider(height: 0),
+              ListTile(
+                leading: const Icon(Icons.info_outline),
+                title: const Text('Uygulama Hakkında'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  showAboutDialog(
+                    context: context,
+                    applicationName: 'Trafik Koçu',
+                    applicationVersion: '1.0.0',
+                    applicationLegalese: '© 2025',
+                  );
+                },
+              ),
             ],
           ),
         ),
