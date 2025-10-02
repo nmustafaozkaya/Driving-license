@@ -1302,7 +1302,7 @@ class _HomePageState extends State<HomePage> {
       ),
       CategoryItem(
         title: 'Araç Teknik',
-        subtitle: 'kategori=Araç Tekniği (Motor ve Araç Bakımı)',
+        subtitle: 'kategori=Motor ve Araç Bakımı',
         icon: Icons.build,
         color: Colors.blue,
       ),
