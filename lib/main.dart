@@ -279,6 +279,28 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _openInstagram() async {
+    const String instagramUrl = 'https://www.instagram.com/ehliyethakimhoca?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==';
+    final uri = Uri.parse(instagramUrl);
+    
+    if (await canLaunchUrl(uri)) {
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Instagram açılamadı. Lütfen gerçek cihazda deneyin.'),
+          ),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Instagram açılamadı. Lütfen gerçek cihazda deneyin.'),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -543,6 +565,16 @@ class _HomePageState extends State<HomePage> {
                 _showMessage('Ders videoları yakında eklenecek.');
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.shuffle),
+              title: const Text('Rastgele Sınav'),
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const RandomAllQuizPage()),
+                );
+              },
+            ),
             const Divider(),
             ListTile(
               leading: const Icon(Icons.privacy_tip_outlined),
@@ -665,8 +697,8 @@ class _HomePageState extends State<HomePage> {
     const String maleInstructorName = 'Hakim Hoca';
     const String femaleInstructorName = 'Ece Hoca';
     // Update these numbers with country code, without leading + or 00
-    const String maleInstructorPhone = '905555555555';
-    const String femaleInstructorPhone = '905555555556';
+    const String maleInstructorPhone = '905469331747';
+    const String femaleInstructorPhone = '905449331747';
 
     Future<void> openWhatsApp(String phone, String name) async {
       final message =
@@ -691,6 +723,7 @@ class _HomePageState extends State<HomePage> {
         ),
       );
     }
+
 
     Widget person({
       required String assetPath,
@@ -755,8 +788,10 @@ class _HomePageState extends State<HomePage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Container(
+                              width: 100,
+                              height: 130,
                               decoration: BoxDecoration(
-                                shape: BoxShape.circle,
+                                borderRadius: BorderRadius.circular(50),
                                 boxShadow: isDark
                                     ? null
                                     : [
@@ -767,12 +802,14 @@ class _HomePageState extends State<HomePage> {
                                         ),
                                       ],
                               ),
-                              child: ClipOval(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(50),
                                 child: Image.asset(
                                   assetPath,
-                                  width: 64,
-                                  height: 64,
+                                  width: 100,
+                                  height: 130,
                                   fit: BoxFit.cover,
+                                  alignment: Alignment.topCenter,
                                 ),
                               ),
                             ),
@@ -907,13 +944,13 @@ class _HomePageState extends State<HomePage> {
             Row(
               children: [
                 person(
-                  assetPath: 'lib/assests/ManWoman/man.png',
+                  assetPath: 'lib/assests/ManWoman/man.jpeg',
                   name: maleInstructorName,
                   phone: maleInstructorPhone,
                 ),
                 const SizedBox(width: 12),
                 person(
-                  assetPath: 'lib/assests/ManWoman/woman.png',
+                  assetPath: 'lib/assests/ManWoman/woman.jpeg',
                   name: femaleInstructorName,
                   phone: femaleInstructorPhone,
                 ),
@@ -940,10 +977,13 @@ class _HomePageState extends State<HomePage> {
           child: _buildActionChip(Icons.campaign, 'Duyurular', chipBg),
         ),
         const SizedBox(width: 8),
-        _buildActionChipImage(
-          'lib/assests/icons/instagram.png',
-          'Instagram',
-          chipBg,
+        GestureDetector(
+          onTap: () => _openInstagram(),
+          child: _buildActionChipImage(
+            'lib/assests/icons/instagram.png',
+            'Instagram',
+            chipBg,
+          ),
         ),
         const SizedBox(width: 8),
         GestureDetector(
@@ -1118,8 +1158,6 @@ class _HomePageState extends State<HomePage> {
     return Column(
       children: [
         _buildTodayExamCard(),
-        const SizedBox(height: 12),
-        _buildRandomExamCard(),
       ],
     );
   }
@@ -1208,83 +1246,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildRandomExamCard() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const RandomAllQuizPage()));
-      },
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: isDark
-              ? null
-              : [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
-                    spreadRadius: 1,
-                    blurRadius: 2,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: Colors.blue,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Image.asset(
-                  'lib/assests/icons/random_signal.png',
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Rastgele Sınav',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Karışık sorularla kendini test et',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Icon(
-              Icons.chevron_right,
-              color: isDark ? Colors.white : Colors.black54,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildBottomCategoriesGrid() {
     final bottomCategories = [
