@@ -15,6 +15,7 @@ import 'pages/favorite_questions_page.dart';
 import 'pages/random_category_quiz_page.dart';
 import 'pages/random_all_quiz_page.dart';
 import 'pages/daily_question_page.dart';
+import 'pages/police_isaretleri_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -280,15 +281,18 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _openInstagram() async {
-    const String instagramUrl = 'https://www.instagram.com/ehliyethakimhoca?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==';
+    const String instagramUrl =
+        'https://www.instagram.com/ehliyethakimhoca?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==';
     final uri = Uri.parse(instagramUrl);
-    
+
     if (await canLaunchUrl(uri)) {
       final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!ok) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Instagram açılamadı. Lütfen gerçek cihazda deneyin.'),
+            content: Text(
+              'Instagram açılamadı. Lütfen gerçek cihazda deneyin.',
+            ),
           ),
         );
       }
@@ -538,6 +542,18 @@ class _HomePageState extends State<HomePage> {
             ),
             // Sıra: Duyurular, E-Sınav, Ders Videoları
             ListTile(
+              leading: const Icon(Icons.local_police),
+              title: const Text('Polis İşaretleri'),
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const PoliceIsaretleriPage(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.campaign),
               title: const Text('Duyurular'),
               onTap: () {
@@ -723,7 +739,6 @@ class _HomePageState extends State<HomePage> {
         ),
       );
     }
-
 
     Widget person({
       required String assetPath,
@@ -1155,11 +1170,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildDailyAndRandomExams() {
-    return Column(
-      children: [
-        _buildTodayExamCard(),
-      ],
-    );
+    return Column(children: [_buildTodayExamCard()]);
   }
 
   Widget _buildTodayExamCard() {
@@ -1245,7 +1256,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
 
   Widget _buildBottomCategoriesGrid() {
     final bottomCategories = [
