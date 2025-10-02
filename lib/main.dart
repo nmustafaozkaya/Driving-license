@@ -15,6 +15,7 @@ import 'pages/favorite_questions_page.dart';
 import 'pages/random_category_quiz_page.dart';
 import 'pages/random_all_quiz_page.dart';
 import 'pages/daily_question_page.dart';
+import 'pages/traffic_signs_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -364,9 +365,10 @@ class _HomePageState extends State<HomePage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Drawer(
       child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             Container(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
               decoration: BoxDecoration(
@@ -575,6 +577,16 @@ class _HomePageState extends State<HomePage> {
                 );
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.warning),
+              title: const Text('Trafik İşaretleri'),
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const TrafficSignsPage()),
+                );
+              },
+            ),
             const Divider(),
             ListTile(
               leading: const Icon(Icons.privacy_tip_outlined),
@@ -624,7 +636,6 @@ class _HomePageState extends State<HomePage> {
                 _showMessage('Puanlama özelliği yakında.');
               },
             ),
-            const Spacer(),
             const Divider(height: 0),
             ListTile(
               leading: const Icon(Icons.info_outline),
@@ -639,7 +650,8 @@ class _HomePageState extends State<HomePage> {
                 );
               },
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -872,9 +884,9 @@ class _HomePageState extends State<HomePage> {
         gradient: isDark
             ? const LinearGradient(
                 colors: [
-                  Color(0xFF1E1B4B),
-                  Color(0xFF312E81),
-                  Color(0xFF3B0764),
+                  Color(0xFF0F172A),
+                  Color(0xFF1E293B),
+                  Color(0xFF0B1324),
                 ],
                 stops: [0.0, 0.55, 1.0],
                 begin: Alignment(-0.9, -1.0),
@@ -882,9 +894,9 @@ class _HomePageState extends State<HomePage> {
               )
             : const LinearGradient(
                 colors: [
-                  Color(0xFF7C3AED),
-                  Color(0xFFE879F9),
-                  Color(0xFFFB7185),
+                  Color(0xFF0EA5E9),
+                  Color(0xFF2563EB),
+                  Color(0xFF22D3EE),
                 ],
                 stops: [0.0, 0.5, 1.0],
                 begin: Alignment(-1.0, -0.8),

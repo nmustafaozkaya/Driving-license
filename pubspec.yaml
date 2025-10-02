@@ -85,6 +85,8 @@ flutter:
     - lib/assests/logo/
     - lib/assests/pdfs/
     - lib/assests/ManWoman/
+    - lib/data/
+    - lib/traffic_signs/trafik/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
