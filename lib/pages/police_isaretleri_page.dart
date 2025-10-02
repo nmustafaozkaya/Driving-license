@@ -10,118 +10,137 @@ class PoliceIsaretleriPage extends StatelessWidget {
     // Polis işaretleri listesi
     final policeSigns = [
       PoliceSign(
-        name: 'Polis İşareti 1',
-        description: 'Bir kırmızı fazda trafiğin çekilmesi işareti.',
+        name: 'Bir kırmızı fazda trafiğin çekilmesi işareti.',
+        description:
+            'Trafik polisi bu işaretle tüm araçların durmasını ve trafiğin çekilmesini sağlar. Kırmızı ışık yanıyorken bu işaret gösterilir.',
         imagePath: 'lib/assests/police/1.jpg',
         color: Colors.red,
       ),
       PoliceSign(
-        name: 'Polis İşareti 2',
-        description: 'Araç durdurma işareti sağa doğru.',
+        name: 'Araç durdurma işareti sağa doğru.',
+        description:
+            'Polis bu işaretle sağ taraftaki araçların durmasını, sola giden araçların geçebileceğini belirtir.',
         imagePath: 'lib/assests/police/2.jpg',
         color: Colors.blue,
       ),
       PoliceSign(
-        name: 'Polis İşareti 3',
-        description: 'Araç durdurma işareti sola doğru.',
+        name: 'Araç durdurma işareti sola doğru.',
+        description:
+            'Bu işaretle polis sol taraftaki araçların durmasını, sağa giden araçların geçebileceğini gösterir.',
         imagePath: 'lib/assests/police/3.jpg',
         color: Colors.green,
       ),
       PoliceSign(
-        name: 'Polis İşareti 4',
+        name:
+            'Ön ve arka taraftaki trafik duracak, her iki kol yönündeki trafik hareket edebilir.',
         description:
-            'Ön ve arka taraftaki trafik duracak her iki kol yönündeki trafik hareket edebilir.',
+            'Bu işaretle polis karşılıklı yönlerdeki trafiği durdururken, yan yönlerdeki araçların geçişine izin verir.',
         imagePath: 'lib/assests/police/4.jpg',
         color: Colors.orange,
       ),
       PoliceSign(
-        name: 'Polis İşareti 5',
+        name:
+            'Ön ve arka taraftaki trafik duracak, her iki kol yönündeki trafik hareket edebilir.',
         description:
-            'Ön ve arka taraftaki trafik duracak her iki kol yönündeki trafik hareket edebilir',
+            'Benzer şekilde bu işaret de karşılıklı trafiği durdurur, yan yönlere geçiş izni verir.',
         imagePath: 'lib/assests/police/5.jpg',
         color: Colors.purple,
       ),
       PoliceSign(
-        name: 'Polis İşareti 6',
-        description: 'Sağ taraftaki trafik sola gidebilir.',
+        name: 'Sağ taraftaki trafik sola gidebilir.',
+        description:
+            'Bu işaretle polis sağ taraftaki araçların sola dönüş yapabileceğini, diğer yönlerin durması gerektiğini belirtir.',
         imagePath: 'lib/assests/police/6.jpg',
         color: Colors.teal,
       ),
       PoliceSign(
-        name: 'Polis İşareti 7',
-        description: 'Sol taraftaki trafik sağa gidebilir.',
+        name: 'Sol taraftaki trafik sağa gidebilir.',
+        description:
+            'Polis bu işaretle sol taraftaki araçların sağa dönüş yapabileceğini, diğer yönlerin beklemesi gerektiğini gösterir.',
         imagePath: 'lib/assests/police/7.jpg',
         color: Colors.amber,
       ),
       PoliceSign(
-        name: 'Polis İşareti 8',
-        description: 'Trafğin bütün istikametlere kapatılması sağ kol.	',
+        name: 'Trafiğin bütün istikametlere kapatılması - sağ kol.',
+        description:
+            'Bu işaretle polis tüm yönlerdeki trafiği durdurur. Sağ kolunu kullanarak bu işareti verir.',
         imagePath: 'lib/assests/police/8.jpg',
         color: Colors.cyan,
       ),
       PoliceSign(
-        name: 'Polis İşareti 9',
-        description: 'Trafğin bütün istikametlere kapatılması sol kol.',
+        name: 'Trafiğin bütün istikametlere kapatılması - sol kol.',
+        description:
+            'Benzer şekilde tüm trafiği durdurur ancak bu sefer sol kolunu kullanarak işaret verir.',
         imagePath: 'lib/assests/police/9.jpg',
         color: Colors.indigo,
       ),
       PoliceSign(
-        name: 'Polis İşareti 10',
-        description: 'Trafiği hızlandırma hareketi sol kol.',
+        name: 'Trafiği hızlandırma hareketi - sol kol.',
+        description:
+            'Polis bu işaretle araçların hızlanmasını ve trafik akışının hızlanmasını sağlar.',
         imagePath: 'lib/assests/police/10.jpg',
         color: Colors.teal,
       ),
       PoliceSign(
-        name: 'Polis İşareti 11',
-        description: 'Trafiği yavaşlatma hareketi sağ kol.',
+        name: 'Trafiği yavaşlatma hareketi - sağ kol.',
+        description:
+            'Bu işaretle polis araçların yavaşlamasını ve daha kontrollü hareket etmesini sağlar.',
         imagePath: 'lib/assests/police/11.jpg',
         color: Colors.deepOrange,
       ),
       PoliceSign(
-        name: 'Polis İşareti 12',
-        description: 'Gece dönüş işareti.',
+        name: 'Gece dönüş işareti.',
+        description:
+            'Karanlıkta veya görüşün kısıtlı olduğu durumlarda polis bu işaretle araçların dönüş yapabileceğini belirtir.',
         imagePath: 'lib/assests/police/12.jpg',
         color: Colors.deepPurple,
       ),
       PoliceSign(
-        name: 'Polis İşareti 13',
-        description: 'Gece geç işareti.',
+        name: 'Gece geç işareti.',
+        description:
+            'Geceleri veya görüşün az olduğu durumlarda polis bu işaretle araçların geçebileceğini gösterir.',
         imagePath: 'lib/assests/police/13.jpg',
         color: Colors.lime,
       ),
       PoliceSign(
-        name: 'Polis İşareti 14',
-        description: 'Gece dur işareti.',
+        name: 'Gece dur işareti.',
+        description:
+            'Karanlıkta veya görüşün kısıtlı olduğu durumlarda polis bu işaretle araçların durması gerektiğini belirtir.',
         imagePath: 'lib/assests/police/14.jpg',
         color: Colors.pink,
       ),
       PoliceSign(
-        name: 'Polis İşareti 15',
-        description: 'Yön tayini sağa işareti.',
+        name: 'Yön tayini sağa işareti.',
+        description:
+            'Polis bu işaretle araçların sağa doğru yönlenmesini ve sağa dönüş yapmasını sağlar.',
         imagePath: 'lib/assests/police/15.jpg',
         color: Colors.brown,
       ),
       PoliceSign(
-        name: 'Polis İşareti 16',
-        description: 'Yön tayini sola işareti.',
+        name: 'Yön tayini sola işareti.',
+        description:
+            'Bu işaretle polis araçların sola doğru yönlenmesini ve sola dönüş yapmasını sağlar.',
         imagePath: 'lib/assests/police/16.jpg',
         color: Colors.grey,
       ),
       PoliceSign(
-        name: 'Polis İşareti 17',
-        description: 'Kırmızı ışıkta trafği çekme işareti.',
+        name: 'Kırmızı ışıkta trafiği çekme işareti.',
+        description:
+            'Kırmızı ışık yanıyorken polis bu işaretle araçların çekilmesini ve trafiğin açılmasını sağlar.',
         imagePath: 'lib/assests/police/17.jpg',
         color: Colors.blueGrey,
       ),
       PoliceSign(
-        name: 'Polis İşareti 18',
-        description: 'Trafik akımını kesme işareti.',
+        name: 'Trafik akımını kesme işareti.',
+        description:
+            'Bu işaretle polis trafik akışını keser ve araçların durmasını sağlar. Genellikle acil durumlarda kullanılır.',
         imagePath: 'lib/assests/police/18.jpg',
         color: Colors.redAccent,
       ),
       PoliceSign(
-        name: 'Polis İşareti 19',
-        description: 'Trafik akımının trafik ışıklarına bırakılması işareti.',
+        name: 'Trafik akımının trafik ışıklarına bırakılması işareti.',
+        description:
+            'Polis bu işaretle trafik kontrolünü tekrar trafik ışıklarına bırakır ve normal trafik akışına döner.',
         imagePath: 'lib/assests/police/19.jpg',
         color: Colors.greenAccent,
       ),
@@ -138,6 +157,8 @@ class PoliceIsaretleriPage extends StatelessWidget {
             ? const Color(0xFF1A1A1A)
             : const Color(0xFFF5F5F5),
         elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        scrolledUnderElevation: 0,
         iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black87),
         titleTextStyle: TextStyle(
           color: isDark ? Colors.white : Colors.black87,
@@ -153,125 +174,16 @@ class PoliceIsaretleriPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Başlık kartı
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: isDark
-                    ? const LinearGradient(
-                        colors: [Color(0xFF1F2A44), Color(0xFF2A2A2A)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      )
-                    : const LinearGradient(
-                        colors: [Color(0xFF1976D2), Color(0xFF42A5F5)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: isDark
-                    ? null
-                    : [
-                        BoxShadow(
-                          color: Colors.blue.withOpacity(0.2),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-              ),
-              child: Column(
-                children: [
-                  Icon(Icons.local_police, size: 48, color: Colors.white),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Polis İşaretleri Rehberi',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Trafik polislerinin kullandığı el işaretlerini öğrenin',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 14,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Önemli notlar
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
-                ),
-                boxShadow: isDark
-                    ? null
-                    : [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.info_outline, color: Colors.blue, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Önemli Notlar',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    '• Polis işaretleri trafik kurallarının üstündedir.\n'
-                    '• İşaretlere mutlaka uyun!\n'
-                    '• Belirsizlik durumunda polise sorun!\n'
-                    '• İşaretleri takip etmek zorunludur.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: isDark ? Colors.grey[300] : Colors.grey[700],
-                      height: 1.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
             // İşaretler listesi
             Text(
               'Polis İşaretleri',
               style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
                 color: isDark ? Colors.white : Colors.black87,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
 
             ListView.builder(
               shrinkWrap: true,
@@ -346,23 +258,26 @@ class PoliceIsaretleriPage extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            // Başlık
-            Text(
-              sign.name,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : Colors.black87,
+            if (sign.name.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              // Başlık
+              Text(
+                sign.name,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.grey[100] : Colors.black,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
+              const SizedBox(height: 8),
+            ] else
+              const SizedBox(height: 8),
             // Açıklama
             Text(
               sign.description,
               style: TextStyle(
                 fontSize: 14,
-                color: isDark ? Colors.grey[400] : Colors.grey[700],
+                color: isDark ? Colors.grey[200] : Colors.black87,
                 height: 1.5,
               ),
             ),

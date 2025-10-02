@@ -16,6 +16,7 @@ import 'pages/random_category_quiz_page.dart';
 import 'pages/random_all_quiz_page.dart';
 import 'pages/daily_question_page.dart';
 import 'pages/police_isaretleri_page.dart';
+import 'pages/hiz_kurallari_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -550,6 +551,16 @@ class _HomePageState extends State<HomePage> {
                   MaterialPageRoute(
                     builder: (_) => const PoliceIsaretleriPage(),
                   ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.speed),
+              title: const Text('Hız Kuralları'),
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const HizKurallariPage()),
                 );
               },
             ),
