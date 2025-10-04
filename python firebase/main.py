@@ -393,6 +393,10 @@ class SoruEklemePaneli(QWidget):
                 selection-background-color: #4a934a;
                 selection-color: white;
             }
+            QTextEdit {
+                color: #000000;
+                background-color: white;
+            }
             QLineEdit:focus, QTextEdit:focus {
                 border-color: #2d5a27;
                 background-color: #ffffff;
@@ -540,11 +544,30 @@ class SoruEklemePaneli(QWidget):
         soru_label.setMaximumWidth(170)
         left_layout.addWidget(soru_label)
         self.soru_input = QTextEdit()
-        self.soru_input.setMinimumHeight(50)
-        self.soru_input.setMaximumHeight(70)
+        self.soru_input.setMinimumHeight(300)
+        self.soru_input.setMaximumHeight(400)
+        self.soru_input.setFixedHeight(500)  # Sabit yükseklik
         self.soru_input.setPlaceholderText("Sorunuzu buraya detaylı ve net bir şekilde yazın. Soru açık, anlaşılır ve kapsamlı olmalıdır...")
         font = QFont('Arial', 11)
         self.soru_input.setFont(font)
+        # QTextEdit için özel stil
+        self.soru_input.setStyleSheet("""
+            QTextEdit {
+                border: 2px solid #4a934a;
+                border-radius: 6px;
+                padding: 12px;
+                background-color: white;
+                color: #000000;
+                font-size: 12px;
+                font-weight: normal;
+                min-height: 150px;
+                max-height: 200px;
+            }
+            QTextEdit:focus {
+                border-color: #2d5a27;
+                background-color: #ffffff;
+            }
+        """)
         left_layout.addWidget(self.soru_input)
         
         # CEVAP SEÇENEKLERİ - Ayrı çerçeve
@@ -560,7 +583,10 @@ class SoruEklemePaneli(QWidget):
         cevap_secenekleri_layout = QVBoxLayout()
         cevap_secenekleri_layout.setSpacing(2)
         cevap_secenekleri_layout.setContentsMargins(3, 2, 3, 2)
-        # Başlık: Cevaplar giriniz - Büyütüldü
+        # Başlık ve doğru cevap seçimi yan yana
+        cevap_header_layout = QHBoxLayout()
+        cevap_header_layout.setSpacing(10)
+        
         cevaplar_baslik = QLabel("SORUNUN CEVAPLARINI GİRİNİZ")
         cevaplar_baslik.setStyleSheet("""
             QLabel {
@@ -575,9 +601,33 @@ class SoruEklemePaneli(QWidget):
             }
         """)
         cevaplar_baslik.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        # Genişliği düşür (içerik boyutuna göre) ve solda dursun
         cevaplar_baslik.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
-        cevap_secenekleri_layout.addWidget(cevaplar_baslik, alignment=Qt.AlignmentFlag.AlignLeft)
+        cevap_header_layout.addWidget(cevaplar_baslik)
+        
+        # Doğru cevap seçimi
+        dogru_label = QLabel("✅ Doğru Cevap:")
+        dogru_label.setStyleSheet("""
+            QLabel {
+                color: #28a745;
+                font-weight: bold;
+                font-size: 12px;
+                padding: 4px 6px;
+                margin: 0px;
+                background-color: #e9f9ec;
+                border: 1px solid #28a745;
+                border-radius: 4px;
+            }
+        """)
+        cevap_header_layout.addWidget(dogru_label)
+        
+        self.dogru_combo = QComboBox()
+        self.dogru_combo.addItems(["A", "B", "C", "D"])
+        self.dogru_combo.setFont(font)
+        self.dogru_combo.setMinimumWidth(80)
+        cevap_header_layout.addWidget(self.dogru_combo)
+        
+        cevap_header_layout.addStretch()
+        cevap_secenekleri_layout.addLayout(cevap_header_layout)
 
         
         # Cevap seçenekleri input'ları
@@ -589,15 +639,12 @@ class SoruEklemePaneli(QWidget):
         answer_font = QFont('Arial', 11)
         
         for i in range(4):
-            row_layout = QHBoxLayout()
-            row_layout.setSpacing(4)
-            row_layout.setContentsMargins(0, 1, 0, 1)
-            row_layout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
-
             letter = "ABCD"[i]
+            
+            # Label üstte - kısa
             label = QLabel(f"{letter}:")
-            label.setMinimumHeight(24)
-            label.setMinimumWidth(80)
+            label.setMinimumHeight(25)
+            label.setMaximumWidth(40)
             label.setStyleSheet("""
                 QLabel {
                     color: #28a745;
@@ -607,32 +654,34 @@ class SoruEklemePaneli(QWidget):
                     border: 1px solid #28a745;
                     border-radius: 4px;
                     padding: 2px 6px;
-                    margin: 1px 0px;
+                    margin: 2px 0px;
                 }
             """)
             label.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter)
-            row_layout.addWidget(label)
+            cevap_inputs_layout.addWidget(label)
             
-            line_edit = QLineEdit()
-            line_edit.setPlaceholderText(f"Seçenek {letter}")
-            line_edit.setFont(answer_font)
-            line_edit.setMinimumHeight(24)
-            line_edit.setStyleSheet("""
-                QLineEdit {
+            # Input altta - QTextEdit ile çok satırlı
+            text_edit = QTextEdit()
+            text_edit.setPlaceholderText(f"Seçenek {letter}")
+            text_edit.setFont(answer_font)
+            text_edit.setMinimumHeight(60)
+            text_edit.setMaximumHeight(120)
+            text_edit.setStyleSheet("""
+                QTextEdit {
                     border: 1px solid #28a745;
                     background-color: white;
                     font-size: 11px;
-                    padding: 3px 6px;
+                    padding: 8px 12px;
                     border-radius: 3px;
+                    margin-bottom: 8px;
                 }
-                QLineEdit:focus {
+                QTextEdit:focus {
                     border-color: #1e7e34;
                     background-color: #ffffff;
                 }
             """)
-            row_layout.addWidget(line_edit)
-            self.cevap_inputs.append(line_edit)
-            cevap_inputs_layout.addLayout(row_layout)
+            cevap_inputs_layout.addWidget(text_edit)
+            self.cevap_inputs.append(text_edit)
         
         cevap_secenekleri_layout.addLayout(cevap_inputs_layout)
         
@@ -711,7 +760,7 @@ class SoruEklemePaneli(QWidget):
             resim_input = QLineEdit()
             resim_input.setPlaceholderText(f"{letter} için resim URL...")
             resim_input.setFont(QFont('Arial', 10))
-            resim_input.setMinimumHeight(24)
+            resim_input.setMinimumHeight(60)
             resim_input.setStyleSheet("""
                 QLineEdit {
                     border: 1px solid #28a745;
@@ -759,15 +808,6 @@ class SoruEklemePaneli(QWidget):
         cevap_resimleri_frame.setLayout(cevap_resimleri_layout)
         left_layout.addWidget(cevap_resimleri_frame)
         
-        # Doğru cevap - Kompakt
-        dogru_layout = QHBoxLayout()
-        dogru_layout.addWidget(QLabel("✅ Doğru Cevap:"))
-        self.dogru_combo = QComboBox()
-        self.dogru_combo.addItems(["A", "B", "C", "D"])
-        self.dogru_combo.setFont(font)
-        dogru_layout.addWidget(self.dogru_combo)
-        dogru_layout.addStretch()
-        left_layout.addLayout(dogru_layout)
         
         left_panel.setLayout(left_layout)
         content_splitter.addWidget(left_panel)
@@ -1278,7 +1318,7 @@ class SoruEklemePaneli(QWidget):
                 return
                 
             # Cevap kontrolü - Esnek yapı (metin veya resim)
-            cevaplar_raw = [c.text() for c in self.cevap_inputs]
+            cevaplar_raw = [c.toPlainText() for c in self.cevap_inputs]
             cevaplar = [str(c).strip() for c in cevaplar_raw]
             cevap_resimleri_raw = [c.text() for c in self.cevap_resim_inputs]
             cevap_resimleri = [str(c).strip() for c in cevap_resimleri_raw]
@@ -1562,7 +1602,7 @@ class SoruDuzenlemePaneli(SoruEklemePaneli):
                     metin = c.get("metin", "")
                 elif isinstance(c, str):
                     metin = c
-            self.cevap_inputs[i].setText(str(metin))
+            self.cevap_inputs[i].setPlainText(str(metin))
         # Cevap resimleri
         for i in range(min(4, len(self.cevap_resim_inputs))):
             url = ""
@@ -1630,7 +1670,7 @@ class SoruDuzenlemePaneli(SoruEklemePaneli):
             return
         try:
             # Orijinal kaydet mantığından veri derle
-            cevaplar_raw = [c.text() for c in self.cevap_inputs]
+            cevaplar_raw = [c.toPlainText() for c in self.cevap_inputs]
             cevaplar = [str(c).strip() for c in cevaplar_raw]
             cevap_resimleri_raw = [c.text() for c in self.cevap_resim_inputs]
             cevap_resimleri = [str(c).strip() for c in cevap_resimleri_raw]
