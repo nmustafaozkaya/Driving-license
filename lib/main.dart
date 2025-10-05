@@ -12,7 +12,7 @@ import 'pages/meb_map_page.dart';
 import 'pages/favorite_questions_page.dart';
 import 'pages/random_category_quiz_page.dart';
 import 'pages/random_all_quiz_page.dart';
-import 'pages/daily_question_page.dart';
+import 'pages/quiz_questions_page.dart';
 import 'pages/traffic_signs_page.dart';
 import 'pages/police_isaretleri_page.dart';
 import 'pages/hiz_kurallari_page.dart';
@@ -123,77 +123,82 @@ class _HomePageState extends State<HomePage> {
     _loadProgress();
   }
 
-  Future<Map<String, dynamic>> _getDailyQuestionData() async {
+  Future<Map<String, dynamic>?> _getDailyQuestionData() async {
     try {
-      // Tüm soruları getir ve en güncel tarihli sınavı bul
+      // Tüm soruları getir
       final snap = await FirebaseFirestore.instance.collection('sorular').get();
 
       if (snap.docs.isEmpty) {
         print('No questions found in Firestore');
-        return {};
+        return null;
       }
 
       final docs = snap.docs.map((e) => e.data()).toList();
 
-      // En güncel tarihli sınavı bul
-      DateTime? latestDate;
-      List<Map<String, dynamic>> latestExamQuestions = [];
+      // Bugünün tarihinden başlayarak geriye doğru git
+      DateTime currentDate = DateTime.now();
+      DateTime? foundDate;
+      List<Map<String, dynamic>> foundExamQuestions = [];
 
-      for (final doc in docs) {
-        final int yil = doc['yıl'] is int ? doc['yıl'] as int : 0;
-        final String ay = (doc['ay'] ?? '').toString();
-        final int gun = doc['gün'] is int ? doc['gün'] as int : 0;
+      // Maksimum 30 gün geriye git (1 ay)
+      for (int i = 0; i < 30; i++) {
+        final checkDate = DateTime(
+          currentDate.year,
+          currentDate.month,
+          currentDate.day - i,
+        );
 
-        if (yil > 0 && gun > 0) {
-          try {
-            // Ay string'ini ay numarasına çevir
-            int monthNumber = _getMonthNumber(ay);
-            if (monthNumber > 0) {
-              final examDate = DateTime(yil, monthNumber, gun);
+        // Bu tarihteki soruları ara
+        final examQuestions = docs.where((d) {
+          final int yil = d['yıl'] is int ? d['yıl'] as int : 0;
+          final String ay = (d['ay'] ?? '').toString();
+          final int gun = d['gün'] is int ? d['gün'] as int : 0;
 
-              if (latestDate == null || examDate.isAfter(latestDate)) {
-                latestDate = examDate;
-                // Bu tarihteki tüm soruları topla
-                latestExamQuestions = docs
-                    .where(
-                      (d) =>
-                          d['yıl'] == yil && d['ay'] == ay && d['gün'] == gun,
-                    )
-                    .toList();
+          if (yil > 0 && gun > 0) {
+            try {
+              int monthNumber = _getMonthNumber(ay);
+              if (monthNumber > 0) {
+                final examDate = DateTime(yil, monthNumber, gun);
+                return examDate.year == checkDate.year &&
+                    examDate.month == checkDate.month &&
+                    examDate.day == checkDate.day;
               }
+            } catch (e) {
+              print('Error parsing date for exam: $yil/$ay/$gun - $e');
             }
-          } catch (e) {
-            print('Error parsing date for exam: $yil/$ay/$gun - $e');
           }
+          return false;
+        }).toList();
+
+        // Eğer bu tarihte soru bulunduysa, onları döndür
+        if (examQuestions.isNotEmpty) {
+          foundExamQuestions = examQuestions;
+          foundDate = checkDate;
+          print(
+            'Found exam on date: ${checkDate.day}/${checkDate.month}/${checkDate.year}',
+          );
+          print('Total questions found: ${foundExamQuestions.length}');
+          break;
         }
       }
 
-      if (latestExamQuestions.isEmpty) {
-        print('No valid exam dates found');
-        return {};
+      if (foundExamQuestions.isEmpty || foundDate == null) {
+        print('No exam questions found in the last 30 days');
+        return null;
       }
 
-      print('Latest exam date: $latestDate');
-      print('Total questions in latest exam: ${latestExamQuestions.length}');
-
-      // En güncel sınavın tüm sorularını döndür
+      // Bulunan tarihi döndür (QuizQuestionsPage için)
       final result = <String, dynamic>{
-        'totalQuestions': latestExamQuestions.length,
-        'questions': latestExamQuestions
-            .map(
-              (q) => {
-                'soru': (q['soru'] ?? '').toString(),
-                'cevaplar': (q['cevaplar'] ?? []),
-                'cevap': q['cevap'],
-              },
-            )
-            .toList(),
+        'yil': foundDate.year,
+        'ay': _getMonthName(foundDate.month),
+        'gun': foundDate.day,
+        'totalQuestions': foundExamQuestions.length,
       };
 
       return result;
     } catch (e) {
-      print('Error getting latest exam data: $e');
-      return {};
+      print('Error getting daily exam data: $e');
+      return null;
     }
   }
 
@@ -213,6 +218,24 @@ class _HomePageState extends State<HomePage> {
       'Aralık': 12,
     };
     return months[monthName] ?? 0;
+  }
+
+  String _getMonthName(int monthNumber) {
+    final months = {
+      1: 'Ocak',
+      2: 'Şubat',
+      3: 'Mart',
+      4: 'Nisan',
+      5: 'Mayıs',
+      6: 'Haziran',
+      7: 'Temmuz',
+      8: 'Ağustos',
+      9: 'Eylül',
+      10: 'Ekim',
+      11: 'Kasım',
+      12: 'Aralık',
+    };
+    return months[monthNumber] ?? 'Ocak';
   }
 
   Future<void> _loadProgress() async {
@@ -1289,7 +1312,7 @@ class _HomePageState extends State<HomePage> {
         try {
           final data = await _getDailyQuestionData();
           if (!mounted) return;
-          if (data.isEmpty) {
+          if (data == null) {
             _showMessage('Günün sınavı yüklenemedi.');
             return;
           }
@@ -1297,23 +1320,13 @@ class _HomePageState extends State<HomePage> {
             'Navigating to latest exam with ${data['totalQuestions']} questions',
           );
 
-          // En son eklenen soruları direkt QuizQuestionsPage'e yönlendir
-          final questions = data['questions'] as List<dynamic>;
-
-          if (questions.isEmpty) {
-            _showMessage('Sınavda soru bulunamadı.');
-            return;
-          }
-
-          // En son eklenen soruları DailyQuestionPage'e yönlendir
+          // QuizQuestionsPage'e yönlendir (A,B,C,D seçenekleri ve ileri/geri butonları ile)
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (_) => DailyQuestionPage(
-                data: {
-                  'soru': 'En Son Eklenen Sorular',
-                  'cevaplar': questions,
-                  'cevap': 0,
-                },
+              builder: (_) => QuizQuestionsPage(
+                yil: data['yil'] as int,
+                ay: data['ay'] as String,
+                gun: data['gun'] as int,
               ),
             ),
           );
