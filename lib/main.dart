@@ -989,7 +989,7 @@ class _HomePageState extends State<HomePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: const [
                       Text(
-                        'Uzman Eğitmenlerle Birebir',
+                        'Uzman Eğitmenlerle Canlı Ders',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
