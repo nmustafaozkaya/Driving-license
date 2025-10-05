@@ -320,6 +320,28 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _openTikTok() async {
+    const String tiktokUrl =
+        'https://www.tiktok.com/@hakimhocaa?is_from_webapp=1&sender_device=pc';
+    final uri = Uri.parse(tiktokUrl);
+    if (await canLaunchUrl(uri)) {
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('TikTok açılamadı. Lütfen gerçek cihazda deneyin.'),
+          ),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('TikTok açılamadı. Lütfen gerçek cihazda deneyin.'),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -355,13 +377,13 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildLiveLessonContactCard(),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   _buildSocialMediaSection(),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   _buildMainExamCard(),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   _buildDailyAndRandomExams(),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   _buildBottomCategoriesGrid(),
                 ],
               ),
@@ -730,6 +752,8 @@ class _HomePageState extends State<HomePage> {
             height: 24,
             width: 24,
             fit: BoxFit.cover,
+            cacheWidth: 48,
+            filterQuality: FilterQuality.low,
           ),
         ),
         const SizedBox(width: 8),
@@ -828,8 +852,8 @@ class _HomePageState extends State<HomePage> {
                         duration: const Duration(milliseconds: 180),
                         curve: Curves.easeOut,
                         padding: const EdgeInsets.symmetric(
-                          vertical: 16,
-                          horizontal: 14,
+                          vertical: 10,
+                          horizontal: 10,
                         ),
                         decoration: BoxDecoration(
                           color: isDark
@@ -855,8 +879,8 @@ class _HomePageState extends State<HomePage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Container(
-                              width: 100,
-                              height: 130,
+                              width: 76,
+                              height: 100,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(50),
                                 boxShadow: isDark
@@ -873,18 +897,20 @@ class _HomePageState extends State<HomePage> {
                                 borderRadius: BorderRadius.circular(50),
                                 child: Image.asset(
                                   assetPath,
-                                  width: 100,
-                                  height: 130,
+                                  width: 76,
+                                  height: 100,
                                   fit: BoxFit.cover,
+                                  cacheWidth: 152,
+                                  filterQuality: FilterQuality.low,
                                   alignment: Alignment.topCenter,
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 6),
                             Text(
                               name,
                               style: TextStyle(
-                                fontSize: 15,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w800,
                                 color: isDark
                                     ? Colors.white
@@ -893,17 +919,19 @@ class _HomePageState extends State<HomePage> {
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 6),
                             SizedBox(
-                              height: 40,
+                              height: 30,
                               child: ElevatedButton.icon(
                                 onPressed: () => openWhatsApp(phone, name),
                                 icon: SizedBox(
-                                  width: 18,
-                                  height: 18,
+                                  width: 14,
+                                  height: 14,
                                   child: Image.asset(
                                     'lib/assests/logo/whatsapp.png',
                                     fit: BoxFit.contain,
+                                    cacheWidth: 28,
+                                    filterQuality: FilterQuality.low,
                                   ),
                                 ),
                                 label: const Text('WhatsApp'),
@@ -911,9 +939,7 @@ class _HomePageState extends State<HomePage> {
                                   backgroundColor: const Color(0xFF25D366),
                                   foregroundColor: Colors.white,
                                   elevation: 0,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 10),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(999),
                                   ),
@@ -960,7 +986,7 @@ class _HomePageState extends State<HomePage> {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.white.withOpacity(0.12)),
@@ -971,8 +997,8 @@ class _HomePageState extends State<HomePage> {
             Row(
               children: [
                 Container(
-                  width: 44,
-                  height: 44,
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.18),
                     borderRadius: BorderRadius.circular(12),
@@ -980,10 +1006,10 @@ class _HomePageState extends State<HomePage> {
                   child: const Icon(
                     Icons.video_call_rounded,
                     color: Colors.white,
-                    size: 26,
+                    size: 20,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -991,23 +1017,23 @@ class _HomePageState extends State<HomePage> {
                       Text(
                         'Uzman Eğitmenlerle Canlı Ders',
                         style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
                           color: Colors.white,
                           letterSpacing: 0.3,
                         ),
                       ),
-                      SizedBox(height: 4),
+                      SizedBox(height: 2),
                       Text(
-                        'Eğitmenlerimizle WhatsApp üzerinden anında iletişim kurun',
-                        style: TextStyle(fontSize: 12, color: Colors.white70),
+                        'WhatsApp üzerinden hemen iletişime geçin',
+                        style: TextStyle(fontSize: 10, color: Colors.white70),
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             Row(
               children: [
                 person(
@@ -1015,7 +1041,7 @@ class _HomePageState extends State<HomePage> {
                   name: maleInstructorName,
                   phone: maleInstructorPhone,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 person(
                   assetPath: 'lib/assests/ManWoman/woman.jpeg',
                   name: femaleInstructorName,
@@ -1036,12 +1062,13 @@ class _HomePageState extends State<HomePage> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         GestureDetector(
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const AnnouncementsPage()),
-            );
-          },
-          child: _buildActionChip(Icons.campaign, 'Duyurular', chipBg),
+          onTap: () => _openTikTok(),
+          child: _buildActionChipImageSized(
+            'lib/assests/icons/tiktok.png',
+            'TikTok',
+            chipBg,
+            24,
+          ),
         ),
         const SizedBox(width: 8),
         GestureDetector(
@@ -1122,7 +1149,58 @@ class _HomePageState extends State<HomePage> {
           SizedBox(
             width: 18,
             height: 18,
-            child: ClipOval(child: Image.asset(asset, fit: BoxFit.cover)),
+            child: ClipOval(
+              child: Image.asset(
+                asset,
+                fit: BoxFit.cover,
+                cacheWidth: 36,
+                filterQuality: FilterQuality.low,
+                errorBuilder: (context, error, stack) => const Icon(Icons.image_not_supported, size: 16),
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(label, style: const TextStyle(fontSize: 12)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionChipImageSized(String asset, String label, Color bg, int cacheW) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+        ),
+        boxShadow: isDark
+            ? null
+            : const [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                ),
+              ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 18,
+            height: 18,
+            child: ClipOval(
+              child: Image.asset(
+                asset,
+                fit: BoxFit.cover,
+                cacheWidth: cacheW,
+                filterQuality: FilterQuality.low,
+                errorBuilder: (context, error, stack) => const Icon(Icons.image_not_supported, size: 16),
+              ),
+            ),
           ),
           const SizedBox(width: 6),
           Text(label, style: const TextStyle(fontSize: 12)),
@@ -1135,7 +1213,7 @@ class _HomePageState extends State<HomePage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -1153,21 +1231,23 @@ class _HomePageState extends State<HomePage> {
       child: Row(
         children: [
           Container(
-            width: 50,
-            height: 50,
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
               color: Colors.blue,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(6.0),
+              child: Padding(
+              padding: const EdgeInsets.all(5.0),
               child: Image.asset(
                 'lib/assests/icons/question.png',
-                fit: BoxFit.contain,
+                  fit: BoxFit.contain,
+                  cacheWidth: 84,
+                  filterQuality: FilterQuality.low,
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1175,23 +1255,23 @@ class _HomePageState extends State<HomePage> {
                 Text(
                   'Çıkmış Sınav Soruları',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w700,
                     color: isDark ? Colors.white : Colors.black87,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   'Gerçek sınav formatında sorularla hazırlanın',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11,
                     color: isDark ? Colors.grey[400] : Colors.grey[600],
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).push(
@@ -1206,10 +1286,10 @@ class _HomePageState extends State<HomePage> {
               );
             },
             style: ElevatedButton.styleFrom(
-              minimumSize: const Size(80, 36),
+              minimumSize: const Size(74, 34),
               backgroundColor: Colors.lightBlue,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -1256,7 +1336,7 @@ class _HomePageState extends State<HomePage> {
         }
       },
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -1276,21 +1356,23 @@ class _HomePageState extends State<HomePage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: Colors.red,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(7.0),
                 child: Image.asset(
                   'lib/assests/icons/today_icon.png',
                   fit: BoxFit.contain,
+                  cacheWidth: 80,
+                  filterQuality: FilterQuality.low,
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1298,7 +1380,7 @@ class _HomePageState extends State<HomePage> {
                   Text(
                     'Günün Sınavı',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: isDark ? Colors.white : Colors.black87,
                     ),
@@ -1307,14 +1389,14 @@ class _HomePageState extends State<HomePage> {
                   Text(
                     'En güncel tarihli sınav',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Icon(
               Icons.chevron_right,
               color: isDark ? Colors.white : Colors.black54,

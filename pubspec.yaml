@@ -82,6 +82,7 @@ flutter:
     - lib/assests/icons/traffic_icon.png
     - lib/assests/icons/speed_meter_icon.png
     - lib/assests/icons/lessons_icon.png
+    - lib/assests/icons/tiktok.png
     - lib/assests/logo/
     - lib/assests/pdfs/
     - lib/assests/ManWoman/
