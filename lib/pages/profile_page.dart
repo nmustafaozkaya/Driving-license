@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'privacy_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final String userName;
-  final double passProbability; // 0..1
   final ValueChanged<String> onNameChanged;
 
   const ProfilePage({
     super.key,
     required this.userName,
-    required this.passProbability,
     required this.onNameChanged,
   });
 
@@ -19,31 +16,9 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  int _solvedQuestions = 0;
-
   @override
   void initState() {
     super.initState();
-    _loadSolvedQuestions();
-  }
-
-  Future<void> _loadSolvedQuestions() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      int totalSolved = 0;
-      final keys = prefs.getKeys();
-      for (final key in keys) {
-        if (key.startsWith('exam_solved_')) {
-          totalSolved += prefs.getInt(key) ?? 0;
-        }
-      }
-      if (!mounted) return;
-      setState(() {
-        _solvedQuestions = totalSolved;
-      });
-    } catch (_) {
-      // ignore errors
-    }
   }
 
   @override
@@ -110,18 +85,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     textAlign: TextAlign.center,
                   ),
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildProfileStat(context, 'Çözülen Soru', '$_solvedQuestions'),
-                    _buildProfileStat(
-                      context,
-                      'Başarı',
-                      '${(widget.passProbability * 100).round()}%',
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
@@ -172,29 +135,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildProfileStat(BuildContext context, String label, String value) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: isDark ? Colors.grey[400] : Colors.grey[600],
-          ),
-        ),
-      ],
-    );
-  }
 
   void _showEditNameDialog(BuildContext context) {
     final TextEditingController controller = TextEditingController(text: widget.userName);

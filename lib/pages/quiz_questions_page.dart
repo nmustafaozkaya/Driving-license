@@ -214,6 +214,7 @@ class _QuestionFlowState extends State<_QuestionFlow> {
     _selectedOptionsByIndex = List<int?>.filled(widget.docs.length, null);
     _lockedByIndex = List<bool>.filled(widget.docs.length, false);
     _restoreExamProgress();
+    _restoreTimer();
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (!mounted) return;
       setState(() {
@@ -221,6 +222,7 @@ class _QuestionFlowState extends State<_QuestionFlow> {
           _remaining -= const Duration(seconds: 1);
         }
       });
+      _saveTimer();
     });
   }
 
@@ -324,6 +326,44 @@ class _QuestionFlowState extends State<_QuestionFlow> {
           _selectedOption = _selectedOptionsByIndex[_index];
           _locked = _lockedByIndex[_index];
         });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _restoreTimer() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final examStartTime = prefs.getInt('exam_start_time_' + _examKey);
+      if (examStartTime != null) {
+        final now = DateTime.now().millisecondsSinceEpoch;
+        final elapsed = (now - examStartTime) ~/ 1000; // elapsed seconds
+        final totalSeconds = 45 * 60; // 45 minutes in seconds
+        final remainingSeconds = totalSeconds - elapsed;
+        
+        if (remainingSeconds > 0) {
+          _remaining = Duration(seconds: remainingSeconds);
+        } else {
+          _remaining = Duration.zero;
+        }
+      } else {
+        // First time starting exam, save start time
+        final now = DateTime.now().millisecondsSinceEpoch;
+        await prefs.setInt('exam_start_time_' + _examKey, now);
+        _remaining = const Duration(minutes: 45);
+      }
+    } catch (_) {
+      _remaining = const Duration(minutes: 45);
+    }
+  }
+
+  Future<void> _saveTimer() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final examStartTime = prefs.getInt('exam_start_time_' + _examKey);
+      if (examStartTime == null) {
+        // Save start time if not already saved
+        final now = DateTime.now().millisecondsSinceEpoch;
+        await prefs.setInt('exam_start_time_' + _examKey, now);
       }
     } catch (_) {}
   }
@@ -596,6 +636,11 @@ class _QuestionFlowState extends State<_QuestionFlow> {
       // Save per-exam solved count (only count actually answered questions)
       final solvedCount = _lockedByIndex.where((e) => e).length;
       await prefs.setInt('exam_solved_' + _examKey, solvedCount);
+      
+      // Clear timer when exam is completed
+      if (solvedCount == widget.docs.length) {
+        await prefs.remove('exam_start_time_' + _examKey);
+      }
     } catch (_) {
       // sessizce geç
     }
@@ -944,11 +989,11 @@ class _QuestionFlowState extends State<_QuestionFlow> {
             const SizedBox(height: 8),
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Container(
-                height: 140,
-                width: double.infinity,
-                color: Colors.black12,
-                alignment: Alignment.center,
+                child: Container(
+                  height: 140,
+                  width: double.infinity,
+                  color: Colors.black12,
+                  alignment: Alignment.center,
                 child: Image.network(
                   resimUrl,
                   fit: BoxFit.contain,
@@ -957,7 +1002,7 @@ class _QuestionFlowState extends State<_QuestionFlow> {
                     return const Icon(
                       Icons.image_not_supported,
                       color: Colors.grey,
-                      size: 40,
+                      size: 50,
                     );
                   },
                   loadingBuilder: (context, child, loadingProgress) {

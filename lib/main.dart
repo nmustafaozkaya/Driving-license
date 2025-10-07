@@ -390,7 +390,6 @@ class _HomePageState extends State<HomePage> {
             )
           : ProfilePage(
               userName: _userName,
-              passProbability: _passProbability,
               onNameChanged: (newName) {
                 setState(() {
                   _userName = newName;

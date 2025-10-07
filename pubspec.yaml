@@ -120,7 +120,7 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "lib/assests/logo/logo.jpeg"
-  adaptive_icon_foreground: "lib/assests/logo/logo.jpeg"
+  image_path: "lib/assests/logo/logo.png"
+  adaptive_icon_foreground: "lib/assests/logo/logo.png"
   adaptive_icon_background: "#FFFFFF"
   min_sdk_android: 21

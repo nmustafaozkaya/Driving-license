@@ -257,11 +257,11 @@ class _RandomCategoryQuizPageState extends State<RandomCategoryQuizPage> {
             const SizedBox(height: 8),
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Container(
-                height: 140,
-                width: double.infinity,
-                color: Colors.black12,
-                alignment: Alignment.center,
+                child: Container(
+                  height: 140,
+                  width: double.infinity,
+                  color: Colors.black12,
+                  alignment: Alignment.center,
                 child: Image.network(
                   resimUrl,
                   fit: BoxFit.contain,
@@ -270,7 +270,7 @@ class _RandomCategoryQuizPageState extends State<RandomCategoryQuizPage> {
                     return const Icon(
                       Icons.image_not_supported,
                       color: Colors.grey,
-                      size: 40,
+                      size: 50,
                     );
                   },
                   loadingBuilder: (context, child, loadingProgress) {
