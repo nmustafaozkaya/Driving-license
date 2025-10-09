@@ -9,6 +9,31 @@ plugins {
 import java.util.Properties
 import java.io.FileInputStream
 
+// Load keystore from key.properties (android/ directory root) and validate
+val keystoreProps = Properties().apply {
+    val f = rootProject.file("key.properties")
+    if (f.exists()) {
+        this.load(FileInputStream(f))
+    }
+}
+val propStoreFile = keystoreProps.getProperty("storeFile")
+val propStorePassword = keystoreProps.getProperty("storePassword")
+val propKeyAlias = keystoreProps.getProperty("keyAlias")
+val propKeyPassword = keystoreProps.getProperty("keyPassword")
+if (propStoreFile.isNullOrBlank() || propStorePassword.isNullOrBlank() ||
+    propKeyAlias.isNullOrBlank() || propKeyPassword.isNullOrBlank()) {
+    throw GradleException("Missing signing properties. Ensure android/key.properties has storeFile, storePassword, keyAlias, keyPassword.")
+}
+// Resolve keystore path: absolute path -> file(...), otherwise relative to repo root
+val storeFileResolved = if (propStoreFile.startsWith("/") || propStoreFile.contains(":")) {
+    file(propStoreFile)
+} else {
+    rootProject.file(propStoreFile)
+}
+if (!storeFileResolved.exists()) {
+    throw GradleException("Keystore file not found: ${storeFileResolved}. Update storeFile in android/key.properties or use an absolute path.")
+}
+
 android {
     namespace = "com.trafikkocu.app"
     compileSdk = flutter.compileSdkVersion
@@ -36,23 +61,12 @@ android {
         resourceConfigurations.addAll(listOf("tr"))
     }
 
-    // Load keystore from android/key.properties if present
-    val keystoreProps = Properties().apply {
-        val f = rootProject.file("android/key.properties")
-        if (f.exists()) {
-            this.load(FileInputStream(f))
-        }
-    }
-
     signingConfigs {
         create("release") {
-            val storePath = keystoreProps["storeFile"] as String?
-            if (storePath != null) {
-                storeFile = rootProject.file(storePath)
-            }
-            storePassword = keystoreProps["storePassword"] as String?
-            keyAlias = keystoreProps["keyAlias"] as String?
-            keyPassword = keystoreProps["keyPassword"] as String?
+            storeFile = storeFileResolved
+            storePassword = propStorePassword
+            keyAlias = propKeyAlias
+            keyPassword = propKeyPassword
         }
     }
 
@@ -64,9 +78,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // Use release signing if configured, otherwise fall back to debug to allow local builds
-            signingConfig = if ((signingConfigs.findByName("release")?.storeFile) != null)
-                signingConfigs.getByName("release") else signingConfigs.getByName("debug")
+            // Force release signing; do not fall back to debug to avoid Play Console errors
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }
