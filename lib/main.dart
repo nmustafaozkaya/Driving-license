@@ -4,17 +4,22 @@ import 'pages/announcements_page.dart';
 import 'pages/privacy_page.dart';
 import 'pages/faq_page.dart';
 import 'pages/all_questions_page.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'pages/meb_map_page.dart';
 import 'pages/favorite_questions_page.dart';
 import 'pages/random_category_quiz_page.dart';
 import 'pages/random_all_quiz_page.dart';
+import 'pages/quiz_questions_page.dart';
 import 'pages/traffic_signs_page.dart';
 import 'pages/police_isaretleri_page.dart';
 import 'pages/hiz_kurallari_page.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const EhliyetApp());
 }
 
@@ -118,14 +123,165 @@ class _HomePageState extends State<HomePage> {
     _loadProgress();
   }
 
+  Future<Map<String, dynamic>?> _getDailyQuestionData() async {
+    try {
+      // Tüm soruları getir
+      final snap = await FirebaseFirestore.instance.collection('sorular').get();
+
+      if (snap.docs.isEmpty) {
+        print('No questions found in Firestore');
+        return null;
+      }
+
+      final docs = snap.docs.map((e) => e.data()).toList();
+
+      // Bugünün tarihinden başlayarak geriye doğru git
+      DateTime currentDate = DateTime.now();
+      DateTime? foundDate;
+      List<Map<String, dynamic>> foundExamQuestions = [];
+
+      // Maksimum 30 gün geriye git (1 ay)
+      for (int i = 0; i < 30; i++) {
+        final checkDate = DateTime(
+          currentDate.year,
+          currentDate.month,
+          currentDate.day - i,
+        );
+
+        // Bu tarihteki soruları ara
+        final examQuestions = docs.where((d) {
+          final int yil = d['yıl'] is int ? d['yıl'] as int : 0;
+          final String ay = (d['ay'] ?? '').toString();
+          final int gun = d['gün'] is int ? d['gün'] as int : 0;
+
+          if (yil > 0 && gun > 0) {
+            try {
+              int monthNumber = _getMonthNumber(ay);
+              if (monthNumber > 0) {
+                final examDate = DateTime(yil, monthNumber, gun);
+                return examDate.year == checkDate.year &&
+                    examDate.month == checkDate.month &&
+                    examDate.day == checkDate.day;
+              }
+            } catch (e) {
+              print('Error parsing date for exam: $yil/$ay/$gun - $e');
+            }
+          }
+          return false;
+        }).toList();
+
+        // Eğer bu tarihte soru bulunduysa, onları döndür
+        if (examQuestions.isNotEmpty) {
+          foundExamQuestions = examQuestions;
+          foundDate = checkDate;
+          print(
+            'Found exam on date: ${checkDate.day}/${checkDate.month}/${checkDate.year}',
+          );
+          print('Total questions found: ${foundExamQuestions.length}');
+          break;
+        }
+      }
+
+      if (foundExamQuestions.isEmpty || foundDate == null) {
+        print('No exam questions found in the last 30 days');
+        return null;
+      }
+
+      // Bulunan tarihi döndür (QuizQuestionsPage için)
+      final result = <String, dynamic>{
+        'yil': foundDate.year,
+        'ay': _getMonthName(foundDate.month),
+        'gun': foundDate.day,
+        'totalQuestions': foundExamQuestions.length,
+      };
+
+      return result;
+    } catch (e) {
+      print('Error getting daily exam data: $e');
+      return null;
+    }
+  }
+
+  int _getMonthNumber(String monthName) {
+    final months = {
+      'Ocak': 1,
+      'Şubat': 2,
+      'Mart': 3,
+      'Nisan': 4,
+      'Mayıs': 5,
+      'Haziran': 6,
+      'Temmuz': 7,
+      'Ağustos': 8,
+      'Eylül': 9,
+      'Ekim': 10,
+      'Kasım': 11,
+      'Aralık': 12,
+    };
+    return months[monthName] ?? 0;
+  }
+
+  String _getMonthName(int monthNumber) {
+    final months = {
+      1: 'Ocak',
+      2: 'Şubat',
+      3: 'Mart',
+      4: 'Nisan',
+      5: 'Mayıs',
+      6: 'Haziran',
+      7: 'Temmuz',
+      8: 'Ağustos',
+      9: 'Eylül',
+      10: 'Ekim',
+      11: 'Kasım',
+      12: 'Aralık',
+    };
+    return months[monthNumber] ?? 'Ocak';
+  }
+
   Future<void> _loadProgress() async {
     try {
       final prefs = await SharedPreferences.getInstance();
 
-      // Firebase removed - load progress from local storage only
-      final totalSolved = prefs.getInt('total_solved_questions') ?? 0;
-      final totalQuestions =
-          prefs.getInt('total_questions') ?? 50; // Default value
+      // First, get all available exams from Firebase
+      final snapshot = await FirebaseFirestore.instance
+          .collection('sorular')
+          .get();
+      final docs = snapshot.docs.map((e) => e.data()).toList();
+
+      // Get unique exam dates
+      final Map<String, Map<String, dynamic>> uniqueDates = {};
+      for (final d in docs) {
+        final int yil = d['yıl'] is int ? d['yıl'] as int : 0;
+        final String ay = (d['ay'] ?? '').toString();
+        final int gun = d['gün'] is int ? d['gün'] as int : 0;
+        final key = '$gun|$ay|$yil';
+        uniqueDates[key] = {'gün': gun, 'ay': ay, 'yıl': yil};
+      }
+
+      final dateItems = uniqueDates.values.toList();
+      // Calculate totals
+      int totalSolved = 0;
+      int totalQuestions = 0;
+
+      for (final item in dateItems) {
+        final int yil = item['yıl'] as int;
+        final String ay = item['ay'] as String;
+        final int gun = item['gün'] as int;
+        final examKey = 'y$yil-$ay-g$gun';
+
+        // Count questions for this exam
+        final examQuestions = docs
+            .where((d) => d['yıl'] == yil && d['ay'] == ay && d['gün'] == gun)
+            .length;
+
+        totalQuestions += examQuestions;
+
+        // Get solved count from SharedPreferences
+        final solved = prefs.getInt('exam_solved_$examKey') ?? 0;
+        totalSolved += solved;
+
+        // We no longer track per-exam completion breakdown on the home header
+      }
 
       setState(() {
         _totalQuestions = totalQuestions;
@@ -782,9 +938,7 @@ class _HomePageState extends State<HomePage> {
                                   backgroundColor: const Color(0xFF25D366),
                                   foregroundColor: Colors.white,
                                   elevation: 0,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 10),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(999),
                                   ),
@@ -1000,8 +1154,7 @@ class _HomePageState extends State<HomePage> {
                 fit: BoxFit.cover,
                 cacheWidth: 36,
                 filterQuality: FilterQuality.low,
-                errorBuilder: (context, error, stack) =>
-                    const Icon(Icons.image_not_supported, size: 16),
+                errorBuilder: (context, error, stack) => const Icon(Icons.image_not_supported, size: 16),
               ),
             ),
           ),
@@ -1012,12 +1165,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildActionChipImageSized(
-    String asset,
-    String label,
-    Color bg,
-    int cacheW,
-  ) {
+  Widget _buildActionChipImageSized(String asset, String label, Color bg, int cacheW) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -1049,8 +1197,7 @@ class _HomePageState extends State<HomePage> {
                 fit: BoxFit.cover,
                 cacheWidth: cacheW,
                 filterQuality: FilterQuality.low,
-                errorBuilder: (context, error, stack) =>
-                    const Icon(Icons.image_not_supported, size: 16),
+                errorBuilder: (context, error, stack) => const Icon(Icons.image_not_supported, size: 16),
               ),
             ),
           ),
@@ -1089,13 +1236,13 @@ class _HomePageState extends State<HomePage> {
               color: Colors.blue,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Padding(
+              child: Padding(
               padding: const EdgeInsets.all(5.0),
               child: Image.asset(
                 'lib/assests/icons/question.png',
-                fit: BoxFit.contain,
-                cacheWidth: 84,
-                filterQuality: FilterQuality.low,
+                  fit: BoxFit.contain,
+                  cacheWidth: 84,
+                  filterQuality: FilterQuality.low,
               ),
             ),
           ),
@@ -1160,10 +1307,32 @@ class _HomePageState extends State<HomePage> {
   Widget _buildTodayExamCard() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
-      onTap: () {
-        _showMessage(
-          'Firebase bağlantısı kaldırıldı. Günün sınavı özelliği geçici olarak devre dışı.',
-        );
+      onTap: () async {
+        try {
+          final data = await _getDailyQuestionData();
+          if (!mounted) return;
+          if (data == null) {
+            _showMessage('Günün sınavı yüklenemedi.');
+            return;
+          }
+          print(
+            'Navigating to latest exam with ${data['totalQuestions']} questions',
+          );
+
+          // QuizQuestionsPage'e yönlendir (A,B,C,D seçenekleri ve ileri/geri butonları ile)
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => QuizQuestionsPage(
+                yil: data['yil'] as int,
+                ay: data['ay'] as String,
+                gun: data['gun'] as int,
+              ),
+            ),
+          );
+        } catch (e) {
+          print('Error in onTap: $e');
+          _showMessage('Günün sınavı yüklenemedi.');
+        }
       },
       child: Container(
         padding: const EdgeInsets.all(12),
