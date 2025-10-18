@@ -35,11 +35,30 @@ class _RandomCategoryQuizPageState extends State<RandomCategoryQuizPage> {
 
   Future<void> _load() async {
     setState(() => _loading = true);
-    final q = await FirebaseFirestore.instance
-        .collection('sorular')
-        .where('kategori', isEqualTo: widget.kategori)
-        .get();
-    final all = q.docs;
+    final base = FirebaseFirestore.instance.collection('sorular');
+    final q = await base.where('kategori', isEqualTo: widget.kategori).get();
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> all = q.docs;
+
+    if (all.isEmpty) {
+      // Fallback: try common aliases for known categories
+      final aliases = _kategoriAliases(widget.kategori);
+      if (aliases.isNotEmpty) {
+        try {
+          final qa = await base.where('kategori', whereIn: aliases).get();
+          all = qa.docs;
+        } catch (_) {
+          // whereIn may fail if aliases length > 10 or index not supported; try sequential
+          for (final k in aliases) {
+            if (all.isNotEmpty) break;
+            final qi = await base.where('kategori', isEqualTo: k).get();
+            if (qi.docs.isNotEmpty) {
+              all = qi.docs;
+              break;
+            }
+          }
+        }
+      }
+    }
     final rng = Random();
     final picked = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
     final used = <int>{};
@@ -58,6 +77,20 @@ class _RandomCategoryQuizPageState extends State<RandomCategoryQuizPage> {
     _selectedOption = null;
     _locked = false;
     setState(() => _loading = false);
+  }
+
+  List<String> _kategoriAliases(String kategori) {
+    final k = kategori.trim();
+    if (k == 'Motor ve Araç Bakımı' ||
+        k == 'Araç Teknik' ||
+        k == 'Araç Tekniği (Motor ve Araç Bakımı)') {
+      return [
+        'Motor ve Araç Bakımı',
+        'Araç Teknik',
+        'Araç Tekniği (Motor ve Araç Bakımı)',
+      ];
+    }
+    return [];
   }
 
   void _next() {
@@ -257,11 +290,11 @@ class _RandomCategoryQuizPageState extends State<RandomCategoryQuizPage> {
             const SizedBox(height: 8),
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  height: 140,
-                  width: double.infinity,
-                  color: Colors.black12,
-                  alignment: Alignment.center,
+              child: Container(
+                height: 140,
+                width: double.infinity,
+                color: Colors.black12,
+                alignment: Alignment.center,
                 child: Image.network(
                   resimUrl,
                   fit: BoxFit.contain,

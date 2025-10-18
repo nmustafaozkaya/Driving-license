@@ -9,10 +9,7 @@ class AnnouncementsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Duyurular'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Duyurular'), centerTitle: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Container(
@@ -69,7 +66,9 @@ class AnnouncementsPage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1F1F1F) : const Color(0xFFF5FAFF),
+                  color: isDark
+                      ? const Color(0xFF1F1F1F)
+                      : const Color(0xFFF5FAFF),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: isDark ? Colors.grey[800]! : const Color(0xFFE3F2FD),
@@ -80,7 +79,10 @@ class AnnouncementsPage extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.lightbulb, color: isDark ? Colors.amber : Colors.amber[800]),
+                        Icon(
+                          Icons.lightbulb,
+                          color: isDark ? Colors.amber : Colors.amber[800],
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           'Kısa Özet',
@@ -93,26 +95,17 @@ class AnnouncementsPage extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 10),
-                    _bullet(context, 'Konuyu anlaya anlaya ilerleyin, ezbere kaçmayın.'),
+                    _bullet(
+                      context,
+                      'Konuyu anlaya anlaya ilerleyin, ezbere kaçmayın.',
+                    ),
                     _bullet(context, 'Her gün 1-2 eğitim videosu izleyin.'),
-                    _bullet(context, 'Günlük ortalama 250 soru çözmeyi hedefleyin.'),
+                    _bullet(
+                      context,
+                      'Günlük ortalama 250 soru çözmeyi hedefleyin.',
+                    ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('YouTube bölümü yakında.')),
-                      );
-                    },
-                    icon: const Icon(Icons.play_circle_outline),
-                    label: const Text('YouTube Bölümüne Git'),
-                  ),
-                ],
               ),
             ],
           ),
@@ -153,5 +146,3 @@ Widget _bullet(BuildContext context, String text) {
     ),
   );
 }
-
-

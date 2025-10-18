@@ -8,6 +8,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:share_plus/share_plus.dart';
 import 'pages/meb_map_page.dart';
 import 'pages/favorite_questions_page.dart';
 import 'pages/random_category_quiz_page.dart';
@@ -37,6 +38,134 @@ class _EhliyetAppState extends State<EhliyetApp> {
     setState(() {
       _isDarkMode = !_isDarkMode;
     });
+  }
+
+  void _showAboutCustom() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Trafik Koçu Uygulaması Hakkında'),
+        contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 4),
+              const Text(
+                'Geliştiriciler',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Expanded(child: Text('Nurettin Mustafa Özkaya')),
+                  TextButton(
+                    onPressed: () async {
+                      final uri = Uri.parse('https://linktr.ee/mustafaaozk');
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(
+                          uri,
+                          mode: LaunchMode.externalApplication,
+                        );
+                      }
+                    },
+                    child: const Text('linktr.ee/mustafaaozk'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  const Expanded(child: Text('Mervan Tahir Kösen')),
+                  TextButton(
+                    onPressed: () async {
+                      final uri = Uri(
+                        scheme: 'mailto',
+                        path: 'mervantahirkosen@gmail.com',
+                      );
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri);
+                      }
+                    },
+                    child: const Text('mervantahirkosen@gmail.com'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Yardım ve Destek',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Expanded(child: Text('Linkler')),
+                  TextButton(
+                    onPressed: () async {
+                      final uri = Uri.parse('https://linktr.ee/mustafaaozk');
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(
+                          uri,
+                          mode: LaunchMode.externalApplication,
+                        );
+                      }
+                    },
+                    child: const Text('linktr.ee/mustafaaozk'),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  const Expanded(child: Text('E-posta')),
+                  TextButton(
+                    onPressed: () async {
+                      final uri = Uri(
+                        scheme: 'mailto',
+                        path: 'mervantahirkosen@gmail.com',
+                      );
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri);
+                      }
+                    },
+                    child: const Text('mervantahirkosen@gmail.com'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Divider(height: 1),
+              const SizedBox(height: 8),
+              const Center(child: Text('Sürüm 1.2.0')),
+              const Center(child: Text('© 2025')),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final uri = Uri.parse(
+                'https://github.com/nmustafaozkaya/TrafikKocu-privacy/blob/main/privacy-policy.md',
+              );
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              }
+            },
+            child: Text(
+              'Lisanslar',
+              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Kapat',
+              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -109,6 +238,94 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  void _showAboutCustom() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Trafik Koçu Uygulaması Hakkında'),
+        contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 4),
+              const Text(
+                'Geliştiriciler',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Expanded(child: Text('Nurettin Mustafa Özkaya')),
+                  TextButton(
+                    onPressed: () async {
+                      final uri = Uri.parse('https://linktr.ee/mustafaaozk');
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(
+                          uri,
+                          mode: LaunchMode.externalApplication,
+                        );
+                      }
+                    },
+                    child: const Text('linktr.ee/mustafaaozk'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  const Expanded(child: Text('Mervan Tahir Kösen')),
+                  TextButton(
+                    onPressed: () async {
+                      final uri = Uri(
+                        scheme: 'mailto',
+                        path: 'mervantahirkosen@gmail.com',
+                      );
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri);
+                      }
+                    },
+                    child: const Text('mervantahirkosen@gmail.com'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Divider(height: 1),
+              const SizedBox(height: 8),
+              const Center(child: Text('Sürüm 1.2.0')),
+              const Center(child: Text('© 2025')),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final uri = Uri.parse(
+                'https://github.com/nmustafaozkaya/TrafikKocu-privacy/blob/main/privacy-policy.md',
+              );
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              }
+            },
+            child: Text(
+              'Lisanslar',
+              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Kapat',
+              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   int _currentIndex = 0;
   double _passProbability = 0.0;
   String _userName = 'Sürücü Adayı';
@@ -135,6 +352,38 @@ class _HomePageState extends State<HomePage> {
 
       final docs = snap.docs.map((e) => e.data()).toList();
 
+      DateTime? parseExamDate(Map<String, dynamic> d) {
+        final dynamic yilRaw = d['yıl'];
+        final dynamic ayRaw = d['ay'];
+        final dynamic gunRaw = d['gün'];
+
+        final int yil = yilRaw is int
+            ? yilRaw
+            : int.tryParse((yilRaw ?? '').toString()) ?? 0;
+
+        final int gun = gunRaw is int
+            ? gunRaw
+            : int.tryParse((gunRaw ?? '').toString()) ?? 0;
+
+        int monthNumber = 0;
+        if (ayRaw is int) {
+          monthNumber = ayRaw;
+        } else {
+          final String ayText = (ayRaw ?? '').toString();
+          // Accept both Turkish month names and numeric strings
+          monthNumber = int.tryParse(ayText) ?? _getMonthNumber(ayText);
+        }
+
+        if (yil > 0 && monthNumber > 0 && gun > 0) {
+          try {
+            return DateTime(yil, monthNumber, gun);
+          } catch (_) {
+            return null;
+          }
+        }
+        return null;
+      }
+
       // Bugünün tarihinden başlayarak geriye doğru git
       DateTime currentDate = DateTime.now();
       DateTime? foundDate;
@@ -148,26 +397,13 @@ class _HomePageState extends State<HomePage> {
           currentDate.day - i,
         );
 
-        // Bu tarihteki soruları ara
+        // Bu tarihteki soruları ara (ay değeri hem sayı hem isim olabilir)
         final examQuestions = docs.where((d) {
-          final int yil = d['yıl'] is int ? d['yıl'] as int : 0;
-          final String ay = (d['ay'] ?? '').toString();
-          final int gun = d['gün'] is int ? d['gün'] as int : 0;
-
-          if (yil > 0 && gun > 0) {
-            try {
-              int monthNumber = _getMonthNumber(ay);
-              if (monthNumber > 0) {
-                final examDate = DateTime(yil, monthNumber, gun);
-                return examDate.year == checkDate.year &&
-                    examDate.month == checkDate.month &&
-                    examDate.day == checkDate.day;
-              }
-            } catch (e) {
-              print('Error parsing date for exam: $yil/$ay/$gun - $e');
-            }
-          }
-          return false;
+          final examDate = parseExamDate(d);
+          if (examDate == null) return false;
+          return examDate.year == checkDate.year &&
+              examDate.month == checkDate.month &&
+              examDate.day == checkDate.day;
         }).toList();
 
         // Eğer bu tarihte soru bulunduysa, onları döndür
@@ -183,8 +419,32 @@ class _HomePageState extends State<HomePage> {
       }
 
       if (foundExamQuestions.isEmpty || foundDate == null) {
-        print('No exam questions found in the last 30 days');
-        return null;
+        // 30 gün içinde bulunamadıysa, en yakın (en yeni) tarihi seç ve onu kullan
+        print(
+          'No exam questions found in the last 30 days, falling back to latest date.',
+        );
+        DateTime? latestDate;
+        for (final d in docs) {
+          final dt = parseExamDate(d);
+          if (dt == null) continue;
+          if (latestDate == null || dt.isAfter(latestDate)) {
+            latestDate = dt;
+          }
+        }
+        if (latestDate != null) {
+          foundDate = latestDate;
+          final ld = latestDate;
+          foundExamQuestions = docs.where((d) {
+            final dt = parseExamDate(d);
+            return dt != null &&
+                dt.year == ld.year &&
+                dt.month == ld.month &&
+                dt.day == ld.day;
+          }).toList();
+        }
+        if (foundExamQuestions.isEmpty || foundDate == null) {
+          return null;
+        }
       }
 
       // Bulunan tarihi döndür (QuizQuestionsPage için)
@@ -339,6 +599,41 @@ class _HomePageState extends State<HomePage> {
           content: Text('TikTok açılamadı. Lütfen gerçek cihazda deneyin.'),
         ),
       );
+    }
+  }
+
+  Future<void> _shareApp() async {
+    const String message =
+        'Trafik Koçu uygulamasını dene! Sınav soruları, işaretler ve daha fazlası.';
+    const String androidUrl =
+        'https://play.google.com/store/apps/details?id=com.trafikkocu.app';
+    final shareText = '$message\n\nAndroid: $androidUrl';
+    try {
+      await Share.share(shareText, subject: 'Trafik Koçu');
+    } catch (e) {
+      _showMessage('Paylaşım sırasında hata oluştu.');
+    }
+  }
+
+  Future<void> _rateApp() async {
+    // Prefer market:// if available; fallback to https
+    const String packageName = 'com.trafikkocu.app';
+    final Uri marketUri = Uri.parse('market://details?id=$packageName');
+    final Uri webUri = Uri.parse(
+      'https://play.google.com/store/apps/details?id=$packageName',
+    );
+    try {
+      if (await canLaunchUrl(marketUri)) {
+        await launchUrl(marketUri, mode: LaunchMode.externalApplication);
+        return;
+      }
+      if (await canLaunchUrl(webUri)) {
+        await launchUrl(webUri, mode: LaunchMode.externalApplication);
+        return;
+      }
+      _showMessage('Puanlama sayfası açılamadı.');
+    } catch (e) {
+      _showMessage('Puanlama sayfası açılamadı.');
     }
   }
 
@@ -541,11 +836,7 @@ class _HomePageState extends State<HomePage> {
                         GestureDetector(
                           onTap: () {
                             Navigator.of(context).pop();
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const FavoriteQuestionsPage(),
-                              ),
-                            );
+                            _openTikTok();
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
@@ -559,11 +850,20 @@ class _HomePageState extends State<HomePage> {
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Icon(Icons.star, color: Colors.white, size: 18),
-                                SizedBox(width: 6),
-                                Text(
-                                  'Favoriler',
+                              children: [
+                                SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: ClipOval(
+                                    child: Image.asset(
+                                      'lib/assests/icons/tiktok.png',
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                const Text(
+                                  'TikTok',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 12,
@@ -685,24 +985,13 @@ class _HomePageState extends State<HomePage> {
                   ).push(MaterialPageRoute(builder: (_) => const FAQPage()));
                 },
               ),
-              ListTile(
-                leading: const Icon(Icons.favorite_outline),
-                title: const Text('Favori Sorularım'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const FavoriteQuestionsPage(),
-                    ),
-                  );
-                },
-              ),
+
               ListTile(
                 leading: const Icon(Icons.share_outlined),
                 title: const Text('Uygulamayı Paylaş'),
                 onTap: () {
                   Navigator.of(context).pop();
-                  _showMessage('Paylaşım özelliği yakında.');
+                  _shareApp();
                 },
               ),
               ListTile(
@@ -710,7 +999,7 @@ class _HomePageState extends State<HomePage> {
                 title: const Text('Uygulamayı Puanla'),
                 onTap: () {
                   Navigator.of(context).pop();
-                  _showMessage('Puanlama özelliği yakında.');
+                  _rateApp();
                 },
               ),
               const Divider(height: 0),
@@ -719,12 +1008,7 @@ class _HomePageState extends State<HomePage> {
                 title: const Text('Uygulama Hakkında'),
                 onTap: () {
                   Navigator.of(context).pop();
-                  showAboutDialog(
-                    context: context,
-                    applicationName: 'Trafik Koçu',
-                    applicationVersion: '1.0.0',
-                    applicationLegalese: '© 2025',
-                  );
+                  _showAboutCustom();
                 },
               ),
             ],
@@ -747,7 +1031,7 @@ class _HomePageState extends State<HomePage> {
         ClipRRect(
           borderRadius: BorderRadius.circular(6),
           child: Image.asset(
-            'lib/assests/logo/logo.jpeg',
+            'lib/assests/logo/logo.png',
             height: 24,
             width: 24,
             fit: BoxFit.cover,
@@ -938,7 +1222,9 @@ class _HomePageState extends State<HomePage> {
                                   backgroundColor: const Color(0xFF25D366),
                                   foregroundColor: Colors.white,
                                   elevation: 0,
-                                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(999),
                                   ),
@@ -1154,7 +1440,8 @@ class _HomePageState extends State<HomePage> {
                 fit: BoxFit.cover,
                 cacheWidth: 36,
                 filterQuality: FilterQuality.low,
-                errorBuilder: (context, error, stack) => const Icon(Icons.image_not_supported, size: 16),
+                errorBuilder: (context, error, stack) =>
+                    const Icon(Icons.image_not_supported, size: 16),
               ),
             ),
           ),
@@ -1165,7 +1452,12 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildActionChipImageSized(String asset, String label, Color bg, int cacheW) {
+  Widget _buildActionChipImageSized(
+    String asset,
+    String label,
+    Color bg,
+    int cacheW,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -1197,7 +1489,8 @@ class _HomePageState extends State<HomePage> {
                 fit: BoxFit.cover,
                 cacheWidth: cacheW,
                 filterQuality: FilterQuality.low,
-                errorBuilder: (context, error, stack) => const Icon(Icons.image_not_supported, size: 16),
+                errorBuilder: (context, error, stack) =>
+                    const Icon(Icons.image_not_supported, size: 16),
               ),
             ),
           ),
@@ -1236,13 +1529,13 @@ class _HomePageState extends State<HomePage> {
               color: Colors.blue,
               borderRadius: BorderRadius.circular(10),
             ),
-              child: Padding(
+            child: Padding(
               padding: const EdgeInsets.all(5.0),
               child: Image.asset(
                 'lib/assests/icons/question.png',
-                  fit: BoxFit.contain,
-                  cacheWidth: 84,
-                  filterQuality: FilterQuality.low,
+                fit: BoxFit.contain,
+                cacheWidth: 84,
+                filterQuality: FilterQuality.low,
               ),
             ),
           ),

@@ -57,8 +57,8 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        // Optional: ship only Turkish resources to reduce size
-        resourceConfigurations.addAll(listOf("tr"))
+        // Avoid restricting locales to prevent missing resources in dependencies
+        // resourceConfigurations.addAll(listOf("tr"))
     }
 
     signingConfigs {

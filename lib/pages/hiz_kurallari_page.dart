@@ -253,9 +253,7 @@ class HizKurallariPage extends StatelessWidget {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: speed.contains('*')
-                  ? Colors.red
-                  : (isDark ? Colors.white : Colors.black87),
+              color: isDark ? Colors.white : Colors.black87,
             ),
           ),
         ],
