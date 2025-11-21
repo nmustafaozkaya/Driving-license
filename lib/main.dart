@@ -1,13 +1,16 @@
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'pages/profile_page.dart';
 import 'pages/announcements_page.dart';
 import 'pages/privacy_page.dart';
 import 'pages/faq_page.dart';
 import 'pages/all_questions_page.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'localization/locale_provider.dart';
+import 'localization/app_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+
 import 'package:url_launcher/url_launcher.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:share_plus/share_plus.dart';
 import 'pages/meb_map_page.dart';
 import 'pages/favorite_questions_page.dart';
@@ -20,18 +23,24 @@ import 'pages/hiz_kurallari_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  runApp(const EhliyetApp());
+  final localeProvider = LocaleProvider();
+  await localeProvider.loadLocale();
+  runApp(
+    ChangeNotifierProvider.value(
+      value: localeProvider,
+      child: const DrivingLicenseApp(),
+    ),
+  );
 }
 
-class EhliyetApp extends StatefulWidget {
-  const EhliyetApp({super.key});
+class DrivingLicenseApp extends StatefulWidget {
+  const DrivingLicenseApp({super.key});
 
   @override
-  State<EhliyetApp> createState() => _EhliyetAppState();
+  State<DrivingLicenseApp> createState() => _DrivingLicenseAppState();
 }
 
-class _EhliyetAppState extends State<EhliyetApp> {
+class _DrivingLicenseAppState extends State<DrivingLicenseApp> {
   bool _isDarkMode = false;
 
   void toggleTheme() {
@@ -40,142 +49,26 @@ class _EhliyetAppState extends State<EhliyetApp> {
     });
   }
 
-  void _showAboutCustom() async {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Trafik Koçu Uygulaması Hakkında'),
-        contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 4),
-              const Text(
-                'Geliştiriciler',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Expanded(child: Text('Nurettin Mustafa Özkaya')),
-                  TextButton(
-                    onPressed: () async {
-                      final uri = Uri.parse('https://linktr.ee/mustafaaozk');
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(
-                          uri,
-                          mode: LaunchMode.externalApplication,
-                        );
-                      }
-                    },
-                    child: const Text('linktr.ee/mustafaaozk'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  const Expanded(child: Text('Mervan Tahir Kösen')),
-                  TextButton(
-                    onPressed: () async {
-                      final uri = Uri(
-                        scheme: 'mailto',
-                        path: 'mervantahirkosen@gmail.com',
-                      );
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri);
-                      }
-                    },
-                    child: const Text('mervantahirkosen@gmail.com'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Yardım ve Destek',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Expanded(child: Text('Linkler')),
-                  TextButton(
-                    onPressed: () async {
-                      final uri = Uri.parse('https://linktr.ee/mustafaaozk');
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(
-                          uri,
-                          mode: LaunchMode.externalApplication,
-                        );
-                      }
-                    },
-                    child: const Text('linktr.ee/mustafaaozk'),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  const Expanded(child: Text('E-posta')),
-                  TextButton(
-                    onPressed: () async {
-                      final uri = Uri(
-                        scheme: 'mailto',
-                        path: 'mervantahirkosen@gmail.com',
-                      );
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri);
-                      }
-                    },
-                    child: const Text('mervantahirkosen@gmail.com'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Divider(height: 1),
-              const SizedBox(height: 8),
-              const Center(child: Text('Sürüm 1.2.0')),
-              const Center(child: Text('© 2025')),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              final uri = Uri.parse(
-                'https://github.com/nmustafaozkaya/TrafikKocu-privacy/blob/main/privacy-policy.md',
-              );
-              if (await canLaunchUrl(uri)) {
-                await launchUrl(uri, mode: LaunchMode.externalApplication);
-              }
-            },
-            child: Text(
-              'Lisanslar',
-              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              'Kapat',
-              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Trafik Koçu',
-      theme: _buildLightTheme(),
-      darkTheme: _buildDarkTheme(),
-      themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
-      home: HomePage(onThemeToggle: toggleTheme),
+    return Consumer<LocaleProvider>(
+      builder: (context, localeProvider, child) {
+        return MaterialApp(
+          title: 'Driver App',
+          locale: localeProvider.locale,
+          supportedLocales: const [Locale('tr', ''), Locale('en', '')],
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          theme: _buildLightTheme(),
+          darkTheme: _buildDarkTheme(),
+          themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
+          home: HomePage(onThemeToggle: toggleTheme),
+        );
+      },
     );
   }
 
@@ -243,7 +136,7 @@ class _HomePageState extends State<HomePage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Trafik Koçu Uygulaması Hakkında'),
+        title: const Text('Driving License Uygulaması Hakkında'),
         contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
         content: SingleChildScrollView(
           child: Column(
@@ -342,16 +235,20 @@ class _HomePageState extends State<HomePage> {
 
   Future<Map<String, dynamic>?> _getDailyQuestionData() async {
     try {
+      // TODO: Firebase will be added
       // Tüm soruları getir
-      final snap = await FirebaseFirestore.instance.collection('sorular').get();
+      // final snap = await FirebaseFirestore.instance.collection('sorular').get();
 
-      if (snap.docs.isEmpty) {
-        print('No questions found in Firestore');
-        return null;
-      }
+      // if (snap.docs.isEmpty) {
+      //   print('No questions found in Firestore');
+      //   return null;
+      // }
 
-      final docs = snap.docs.map((e) => e.data()).toList();
+      // final docs = snap.docs.map((e) => e.data()).toList();
 
+      // TODO: Firebase will be added - The rest of this function depends on Firebase
+      // The following code is commented out until Firebase is added:
+      /*
       DateTime? parseExamDate(Map<String, dynamic> d) {
         final dynamic yilRaw = d['yıl'];
         final dynamic ayRaw = d['ay'];
@@ -456,58 +353,72 @@ class _HomePageState extends State<HomePage> {
       };
 
       return result;
+      */
+
+      // Temporarily return null until Firebase is added
+      return null;
     } catch (e) {
-      print('Error getting daily exam data: $e');
+      developer.log('Error getting daily exam data: $e', name: 'DrivingLicenseApp');
       return null;
     }
   }
 
-  int _getMonthNumber(String monthName) {
-    final months = {
-      'Ocak': 1,
-      'Şubat': 2,
-      'Mart': 3,
-      'Nisan': 4,
-      'Mayıs': 5,
-      'Haziran': 6,
-      'Temmuz': 7,
-      'Ağustos': 8,
-      'Eylül': 9,
-      'Ekim': 10,
-      'Kasım': 11,
-      'Aralık': 12,
-    };
-    return months[monthName] ?? 0;
-  }
+  // Commented out until Firebase is implemented
+  // int _getMonthNumber(String monthName) {
+  //   final months = {
+  //     'Ocak': 1,
+  //     'Şubat': 2,
+  //     'Mart': 3,
+  //     'Nisan': 4,
+  //     'Mayıs': 5,
+  //     'Haziran': 6,
+  //     'Temmuz': 7,
+  //     'Ağustos': 8,
+  //     'Eylül': 9,
+  //     'Ekim': 10,
+  //     'Kasım': 11,
+  //     'Aralık': 12,
+  //   };
+  //   return months[monthName] ?? 0;
+  // }
 
-  String _getMonthName(int monthNumber) {
-    final months = {
-      1: 'Ocak',
-      2: 'Şubat',
-      3: 'Mart',
-      4: 'Nisan',
-      5: 'Mayıs',
-      6: 'Haziran',
-      7: 'Temmuz',
-      8: 'Ağustos',
-      9: 'Eylül',
-      10: 'Ekim',
-      11: 'Kasım',
-      12: 'Aralık',
-    };
-    return months[monthNumber] ?? 'Ocak';
-  }
+  // Commented out until Firebase is implemented
+  // String _getMonthName(int monthNumber) {
+  //   final months = {
+  //     1: 'Ocak',
+  //     2: 'Şubat',
+  //     3: 'Mart',
+  //     4: 'Nisan',
+  //     5: 'Mayıs',
+  //     6: 'Haziran',
+  //     7: 'Temmuz',
+  //     8: 'Ağustos',
+  //     9: 'Eylül',
+  //     10: 'Ekim',
+  //     11: 'Kasım',
+  //     12: 'Aralık',
+  //   };
+  //   return months[monthNumber] ?? 'Ocak';
+  // }
 
   Future<void> _loadProgress() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-
+      // TODO: Firebase will be added
+      // final prefs = await SharedPreferences.getInstance();
       // First, get all available exams from Firebase
-      final snapshot = await FirebaseFirestore.instance
-          .collection('sorular')
-          .get();
-      final docs = snapshot.docs.map((e) => e.data()).toList();
+      // final snapshot = await FirebaseFirestore.instance
+      //     .collection('sorular')
+      //     .get();
+      // final docs = snapshot.docs.map((e) => e.data()).toList();
 
+      // Temporarily set to 0 until Firebase is added
+      setState(() {
+        _totalQuestions = 0;
+        _solvedQuestions = 0;
+        _passProbability = 0.0;
+      });
+
+      /* 
       // Get unique exam dates
       final Map<String, Map<String, dynamic>> uniqueDates = {};
       for (final d in docs) {
@@ -550,66 +461,20 @@ class _HomePageState extends State<HomePage> {
             ? (totalSolved / totalQuestions).clamp(0.0, 1.0)
             : 0.0;
       });
+      */
     } catch (e) {
-      print('Error loading progress: $e');
-    }
-  }
-
-  Future<void> _openInstagram() async {
-    const String instagramUrl =
-        'https://www.instagram.com/ehliyethakimhoca?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==';
-    final uri = Uri.parse(instagramUrl);
-
-    if (await canLaunchUrl(uri)) {
-      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!ok) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Instagram açılamadı. Lütfen gerçek cihazda deneyin.',
-            ),
-          ),
-        );
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Instagram açılamadı. Lütfen gerçek cihazda deneyin.'),
-        ),
-      );
-    }
-  }
-
-  Future<void> _openTikTok() async {
-    const String tiktokUrl =
-        'https://www.tiktok.com/@hakimhocaa?is_from_webapp=1&sender_device=pc';
-    final uri = Uri.parse(tiktokUrl);
-    if (await canLaunchUrl(uri)) {
-      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!ok) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('TikTok açılamadı. Lütfen gerçek cihazda deneyin.'),
-          ),
-        );
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('TikTok açılamadı. Lütfen gerçek cihazda deneyin.'),
-        ),
-      );
+      developer.log('Error loading progress: $e', name: 'DrivingLicenseApp');
     }
   }
 
   Future<void> _shareApp() async {
     const String message =
-        'Trafik Koçu uygulamasını dene! Sınav soruları, işaretler ve daha fazlası.';
+        'Driving License uygulamasını dene! Sınav soruları, işaretler ve daha fazlası.';
     const String androidUrl =
         'https://play.google.com/store/apps/details?id=com.trafikkocu.app';
     final shareText = '$message\n\nAndroid: $androidUrl';
     try {
-      await Share.share(shareText, subject: 'Trafik Koçu');
+      await Share.share(shareText, subject: 'Driving License');
     } catch (e) {
       _showMessage('Paylaşım sırasında hata oluştu.');
     }
@@ -650,16 +515,20 @@ class _HomePageState extends State<HomePage> {
         ),
         title: _currentIndex == 0
             ? _buildAppTitle()
-            : const Text(
-                'Profil',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            : Text(
+                AppLocalizations.of(context)?.profile ?? 'Profil',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
         centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.brightness_6),
             onPressed: widget.onThemeToggle,
-            tooltip: 'Tema Değiştir',
+            tooltip:
+                AppLocalizations.of(context)?.changeTheme ?? 'Tema Değiştir',
           ),
         ],
       ),
@@ -671,8 +540,6 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildLiveLessonContactCard(),
-                  const SizedBox(height: 8),
                   _buildSocialMediaSection(),
                   const SizedBox(height: 8),
                   _buildMainExamCard(),
@@ -697,6 +564,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildAppDrawer() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final localizations = AppLocalizations.of(context);
     return Drawer(
       child: SafeArea(
         child: SingleChildScrollView(
@@ -784,97 +652,6 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 14),
-                    GridView.count(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      childAspectRatio: 3.2,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.of(context).pop();
-                            _openInstagram();
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 8,
-                              horizontal: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.white24),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: ClipOval(
-                                    child: Image.asset(
-                                      'lib/assests/icons/instagram.png',
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                const Text(
-                                  'Instagram',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.of(context).pop();
-                            _openTikTok();
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 8,
-                              horizontal: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.white24),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: ClipOval(
-                                    child: Image.asset(
-                                      'lib/assests/icons/tiktok.png',
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                const Text(
-                                  'TikTok',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
                   ],
                 ),
               ),
@@ -886,7 +663,7 @@ class _HomePageState extends State<HomePage> {
               // Trafik İşaretleri Grubu
               ListTile(
                 leading: const Icon(Icons.local_police),
-                title: const Text('Polis İşaretleri'),
+                title: Text(localizations?.policeSignals ?? 'Polis İşaretleri'),
                 onTap: () {
                   Navigator.of(context).pop();
                   Navigator.of(context).push(
@@ -898,7 +675,7 @@ class _HomePageState extends State<HomePage> {
               ),
               ListTile(
                 leading: const Icon(Icons.speed),
-                title: const Text('Hız Kuralları'),
+                title: Text(localizations?.speedRules ?? 'Hız Kuralları'),
                 onTap: () {
                   Navigator.of(context).pop();
                   Navigator.of(context).push(
@@ -908,7 +685,7 @@ class _HomePageState extends State<HomePage> {
               ),
               ListTile(
                 leading: const Icon(Icons.warning),
-                title: const Text('Trafik İşaretleri'),
+                title: Text(localizations?.trafficSigns ?? 'Trafik İşaretleri'),
                 onTap: () {
                   Navigator.of(context).pop();
                   Navigator.of(context).push(
@@ -924,7 +701,7 @@ class _HomePageState extends State<HomePage> {
               // Diğer Menüler
               ListTile(
                 leading: const Icon(Icons.campaign),
-                title: const Text('Duyurular'),
+                title: Text(localizations?.announcements ?? 'Duyurular'),
                 onTap: () {
                   Navigator.of(context).pop();
                   Navigator.of(context).push(
@@ -936,7 +713,9 @@ class _HomePageState extends State<HomePage> {
               ),
               ListTile(
                 leading: const Icon(Icons.map_outlined),
-                title: const Text('E-Sınav Sonuç Sayfası'),
+                title: Text(
+                  localizations?.examResults ?? 'E-Sınav Sonuç Sayfası',
+                ),
                 onTap: () {
                   Navigator.of(context).pop();
                   Navigator.of(
@@ -946,7 +725,7 @@ class _HomePageState extends State<HomePage> {
               ),
               ListTile(
                 leading: const Icon(Icons.play_circle_outline),
-                title: const Text('Ders Videoları'),
+                title: Text(localizations?.lessonVideos ?? 'Ders Videoları'),
                 onTap: () {
                   Navigator.of(context).pop();
                   _showMessage('Ders videoları yakında eklenecek.');
@@ -954,7 +733,7 @@ class _HomePageState extends State<HomePage> {
               ),
               ListTile(
                 leading: const Icon(Icons.shuffle),
-                title: const Text('Rastgele Sınav'),
+                title: Text(localizations?.randomExam ?? 'Rastgele Sınav'),
                 onTap: () {
                   Navigator.of(context).pop();
                   Navigator.of(context).push(
@@ -967,7 +746,7 @@ class _HomePageState extends State<HomePage> {
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.privacy_tip_outlined),
-                title: const Text('Gizlilik Şartları'),
+                title: Text(localizations?.privacy ?? 'Gizlilik Şartları'),
                 onTap: () {
                   Navigator.of(context).pop();
                   Navigator.of(context).push(
@@ -977,7 +756,7 @@ class _HomePageState extends State<HomePage> {
               ),
               ListTile(
                 leading: const Icon(Icons.quiz_outlined),
-                title: const Text('Sıkça Sorulan Sorular'),
+                title: Text(localizations?.faq ?? 'Sıkça Sorulan Sorular'),
                 onTap: () {
                   Navigator.of(context).pop();
                   Navigator.of(
@@ -988,7 +767,7 @@ class _HomePageState extends State<HomePage> {
 
               ListTile(
                 leading: const Icon(Icons.share_outlined),
-                title: const Text('Uygulamayı Paylaş'),
+                title: Text(localizations?.shareApp ?? 'Uygulamayı Paylaş'),
                 onTap: () {
                   Navigator.of(context).pop();
                   _shareApp();
@@ -996,7 +775,7 @@ class _HomePageState extends State<HomePage> {
               ),
               ListTile(
                 leading: const Icon(Icons.star_rate_outlined),
-                title: const Text('Uygulamayı Puanla'),
+                title: Text(localizations?.rateApp ?? 'Uygulamayı Puanla'),
                 onTap: () {
                   Navigator.of(context).pop();
                   _rateApp();
@@ -1005,7 +784,7 @@ class _HomePageState extends State<HomePage> {
               const Divider(height: 0),
               ListTile(
                 leading: const Icon(Icons.info_outline),
-                title: const Text('Uygulama Hakkında'),
+                title: Text(localizations?.aboutApp ?? 'Uygulama Hakkında'),
                 onTap: () {
                   Navigator.of(context).pop();
                   _showAboutCustom();
@@ -1045,7 +824,7 @@ class _HomePageState extends State<HomePage> {
               gradient.createShader(Offset.zero & bounds.size),
           blendMode: BlendMode.srcIn,
           child: const Text(
-            'Trafik Koçu',
+            'Driver App',
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w800,
@@ -1067,6 +846,8 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // Commented out - not currently used
+  /*
   Widget _buildLiveLessonContactCard() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     const String maleInstructorName = 'Hakim Hoca';
@@ -1077,7 +858,7 @@ class _HomePageState extends State<HomePage> {
 
     Future<void> openWhatsApp(String phone, String name) async {
       final message =
-          'Merhaba $name, Trafik Koçu uygulamasından canlı/özel ders talep ediyorum.';
+          'Merhaba $name, Driving License uygulamasından canlı/özel ders talep ediyorum.';
       final uri = Uri.parse(
         'https://wa.me/$phone?text=${Uri.encodeComponent(message)}',
       );
@@ -1339,39 +1120,26 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+  */
 
   Widget _buildSocialMediaSection() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final chipBg = isDark ? const Color(0xFF2A2A2A) : Colors.white;
+    final localizations = AppLocalizations.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        GestureDetector(
-          onTap: () => _openTikTok(),
-          child: _buildActionChipImageSized(
-            'lib/assests/icons/tiktok.png',
-            'TikTok',
-            chipBg,
-            24,
-          ),
-        ),
-        const SizedBox(width: 8),
-        GestureDetector(
-          onTap: () => _openInstagram(),
-          child: _buildActionChipImage(
-            'lib/assests/icons/instagram.png',
-            'Instagram',
-            chipBg,
-          ),
-        ),
-        const SizedBox(width: 8),
         GestureDetector(
           onTap: () {
             Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const FavoriteQuestionsPage()),
             );
           },
-          child: _buildActionChip(Icons.star, 'Favoriler', chipBg),
+          child: _buildActionChip(
+            Icons.star,
+            localizations?.favorites ?? 'Favoriler',
+            chipBg,
+          ),
         ),
       ],
     );
@@ -1408,101 +1176,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildActionChipImage(String asset, String label, Color bg) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
-        ),
-        boxShadow: isDark
-            ? null
-            : [
-                const BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
-                ),
-              ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: 18,
-            height: 18,
-            child: ClipOval(
-              child: Image.asset(
-                asset,
-                fit: BoxFit.cover,
-                cacheWidth: 36,
-                filterQuality: FilterQuality.low,
-                errorBuilder: (context, error, stack) =>
-                    const Icon(Icons.image_not_supported, size: 16),
-              ),
-            ),
-          ),
-          const SizedBox(width: 6),
-          Text(label, style: const TextStyle(fontSize: 12)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionChipImageSized(
-    String asset,
-    String label,
-    Color bg,
-    int cacheW,
-  ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
-        ),
-        boxShadow: isDark
-            ? null
-            : const [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
-                ),
-              ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: 18,
-            height: 18,
-            child: ClipOval(
-              child: Image.asset(
-                asset,
-                fit: BoxFit.cover,
-                cacheWidth: cacheW,
-                filterQuality: FilterQuality.low,
-                errorBuilder: (context, error, stack) =>
-                    const Icon(Icons.image_not_supported, size: 16),
-              ),
-            ),
-          ),
-          const SizedBox(width: 6),
-          Text(label, style: const TextStyle(fontSize: 12)),
-        ],
-      ),
-    );
-  }
-
   Widget _buildMainExamCard() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final localizations = AppLocalizations.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -1513,7 +1189,7 @@ class _HomePageState extends State<HomePage> {
             ? null
             : [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
+                  color: Colors.grey.withValues(alpha: 0.1),
                   spreadRadius: 1,
                   blurRadius: 2,
                   offset: const Offset(0, 1),
@@ -1545,7 +1221,7 @@ class _HomePageState extends State<HomePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Çıkmış Sınav Soruları',
+                  localizations?.allQuestions ?? 'Çıkmış Sınav Soruları',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -1554,7 +1230,8 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Gerçek sınav formatında sorularla hazırlanın',
+                  localizations?.allQuestionsDesc ??
+                      'Gerçek sınav formatında sorularla hazırlanın',
                   style: TextStyle(
                     fontSize: 11,
                     color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -1586,7 +1263,7 @@ class _HomePageState extends State<HomePage> {
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: const Text('Başla'),
+            child: Text(localizations?.start ?? 'Başla'),
           ),
         ],
       ),
@@ -1599,6 +1276,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildTodayExamCard() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final localizations = AppLocalizations.of(context);
     return GestureDetector(
       onTap: () async {
         try {
@@ -1608,8 +1286,9 @@ class _HomePageState extends State<HomePage> {
             _showMessage('Günün sınavı yüklenemedi.');
             return;
           }
-          print(
+          developer.log(
             'Navigating to latest exam with ${data['totalQuestions']} questions',
+            name: 'DrivingLicenseApp',
           );
 
           // QuizQuestionsPage'e yönlendir (A,B,C,D seçenekleri ve ileri/geri butonları ile)
@@ -1623,7 +1302,7 @@ class _HomePageState extends State<HomePage> {
             ),
           );
         } catch (e) {
-          print('Error in onTap: $e');
+          developer.log('Error in onTap: $e', name: 'DrivingLicenseApp');
           _showMessage('Günün sınavı yüklenemedi.');
         }
       },
@@ -1636,7 +1315,7 @@ class _HomePageState extends State<HomePage> {
               ? null
               : [
                   BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
+                    color: Colors.grey.withValues(alpha: 0.1),
                     spreadRadius: 1,
                     blurRadius: 2,
                     offset: const Offset(0, 1),
@@ -1670,7 +1349,7 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Günün Sınavı',
+                    localizations?.todayExam ?? 'Günün Sınavı',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -1679,7 +1358,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'En güncel tarihli sınav',
+                    localizations?.todayExamDesc ?? 'En güncel tarihli sınav',
                     style: TextStyle(
                       fontSize: 11,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -1700,27 +1379,29 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildBottomCategoriesGrid() {
+    final localizations = AppLocalizations.of(context);
     final bottomCategories = [
       CategoryItem(
-        title: 'Trafik ve Çevre Bilgisi',
+        title:
+            localizations?.trafficAndEnvironment ?? 'Trafik ve Çevre Bilgisi',
         subtitle: 'kategori=Trafik ve Çevre Bilgisi',
         icon: Icons.traffic,
         color: Colors.red,
       ),
       CategoryItem(
-        title: 'İlk Yardım Bilgisi',
+        title: localizations?.firstAid ?? 'İlk Yardım Bilgisi',
         subtitle: 'kategori=İlk Yardım Bilgisi',
         icon: Icons.medical_services,
         color: Colors.orange,
       ),
       CategoryItem(
-        title: 'Araç Teknik',
+        title: localizations?.vehicleTechnical ?? 'Araç Teknik',
         subtitle: 'kategori=Motor ve Araç Bakımı',
         icon: Icons.build,
         color: Colors.blue,
       ),
       CategoryItem(
-        title: 'Trafik Adabı',
+        title: localizations?.trafficEthics ?? 'Trafik Adabı',
         subtitle: 'kategori=Trafik Adabı',
         icon: Icons.handshake,
         color: Colors.purple,
@@ -1850,6 +1531,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildBottomNavigationBar() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final localizations = AppLocalizations.of(context);
     return Container(
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
@@ -1871,10 +1553,15 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: isDark ? const Color(0xFF2A2A2A) : Colors.white,
         selectedItemColor: Colors.lightBlue,
         unselectedItemColor: isDark ? Colors.grey[400] : Colors.grey[600],
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Ana Sayfa'),
-
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
+        items: [
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.home),
+            label: localizations?.home ?? 'Ana Sayfa',
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.person),
+            label: localizations?.profile ?? 'Profil',
+          ),
         ],
       ),
     );

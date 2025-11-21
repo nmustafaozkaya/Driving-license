@@ -1,6 +1,6 @@
 {
-    "name": "ehliyet",
-    "short_name": "ehliyet",
+    "name": "Driving License",
+    "short_name": "Driving License",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

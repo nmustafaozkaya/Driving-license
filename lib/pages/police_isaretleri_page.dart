@@ -246,7 +246,7 @@ class PoliceIsaretleriPage extends StatelessWidget {
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
-                        color: sign.color.withOpacity(0.1),
+                        color: sign.color.withValues(alpha: 0.1),
                         child: Icon(
                           Icons.local_police,
                           color: sign.color,

@@ -21,9 +21,11 @@ class _TrafficSignsPageState extends State<TrafficSignsPage> {
 
   Future<void> _loadTrafficSigns() async {
     try {
-      final String jsonString = await rootBundle.loadString('lib/data/traffic_signs.json');
+      final String jsonString = await rootBundle.loadString(
+        'lib/data/traffic_signs.json',
+      );
       final Map<String, dynamic> jsonData = json.decode(jsonString);
-      
+
       setState(() {
         signs = (jsonData['signs'] as List)
             .map((sign) => TrafficSign.fromJson(sign))
@@ -34,41 +36,39 @@ class _TrafficSignsPageState extends State<TrafficSignsPage> {
       setState(() {
         isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Veriler yüklenirken hata oluştu: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Veriler yüklenirken hata oluştu: $e')),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Trafik İşaretleri'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Trafik İşaretleri'), centerTitle: true),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : signs.isEmpty
-              ? const Center(
-                  child: Text(
-                    'Trafik işaretleri yüklenemedi.',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: signs.length,
-                  itemBuilder: (context, index) {
-                    final sign = signs[index];
-                    return _buildSignItem(sign, isDark);
-                  },
-                ),
+          ? const Center(
+              child: Text(
+                'Trafik işaretleri yüklenemedi.',
+                style: TextStyle(fontSize: 16),
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: signs.length,
+              itemBuilder: (context, index) {
+                final sign = signs[index];
+                return _buildSignItem(sign, isDark);
+              },
+            ),
     );
   }
-
 
   Widget _buildSignItem(TrafficSign sign, bool isDark) {
     return Container(
@@ -102,20 +102,13 @@ class _TrafficSignsPageState extends State<TrafficSignsPage> {
                   height: 96,
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) {
-                    // Debug için hata mesajını yazdır
-                    print('Resim yüklenemedi: ${sign.image}');
-                    print('Hata: $error');
                     // Resim yüklenemezse varsayılan ikon göster
                     return Container(
                       color: Colors.red[100],
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(
-                            Icons.error,
-                            color: Colors.red,
-                            size: 20,
-                          ),
+                          const Icon(Icons.error, color: Colors.red, size: 20),
                           Text(
                             'HATA',
                             style: TextStyle(
@@ -145,14 +138,14 @@ class _TrafficSignsPageState extends State<TrafficSignsPage> {
                     ),
                   ),
                   const SizedBox(height: 6),
-                Text(
-                  sign.description,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: isDark ? Colors.grey[300] : Colors.grey[600],
+                  Text(
+                    sign.description,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: isDark ? Colors.grey[300] : Colors.grey[600],
+                    ),
+                    softWrap: true,
                   ),
-                  softWrap: true,
-                ),
                 ],
               ),
             ),
@@ -162,7 +155,6 @@ class _TrafficSignsPageState extends State<TrafficSignsPage> {
     );
   }
 }
-
 
 class TrafficSign {
   final String id;

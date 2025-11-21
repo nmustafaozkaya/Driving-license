@@ -193,7 +193,7 @@ class HizKurallariPage extends StatelessWidget {
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
                       decoration: BoxDecoration(
-                        color: vehicle.color.withOpacity(0.1),
+                        color: vehicle.color.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(

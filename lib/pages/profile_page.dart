@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'privacy_page.dart';
+import 'package:provider/provider.dart';
+import '../localization/locale_provider.dart';
+import '../localization/app_localizations.dart';
 
 class ProfilePage extends StatefulWidget {
   final String userName;
@@ -16,6 +19,109 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  Widget _buildLanguageTile(BuildContext context) {
+    return Consumer<LocaleProvider>(
+      builder: (context, localeProvider, child) {
+        final currentLocale = localeProvider.locale.languageCode;
+        final languageText = currentLocale == 'tr'
+            ? 'Türkçe 🇹🇷'
+            : 'English 🇬🇧';
+
+        return ListTile(
+          leading: const Icon(Icons.language),
+          title: const Text('Dil / Language'),
+          subtitle: Text(
+            languageText,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          ),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () {
+            showDialog(
+              context: context,
+              builder: (dialogContext) {
+                return AlertDialog(
+                  title: const Text('Dil Seçin / Select Language'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ListTile(
+                        leading: currentLocale == 'tr'
+                            ? const Icon(
+                                Icons.check_circle,
+                                color: Colors.green,
+                              )
+                            : const Icon(Icons.circle_outlined),
+                        title: const Row(
+                          children: [
+                            Text('🇹🇷', style: TextStyle(fontSize: 24)),
+                            SizedBox(width: 12),
+                            Text('Türkçe'),
+                          ],
+                        ),
+                        onTap: () {
+                          localeProvider.setLocale(const Locale('tr'));
+                          Navigator.pop(dialogContext);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                AppLocalizations.of(
+                                      context,
+                                    )?.languageSetTurkish ??
+                                    'Dil Türkçe olarak ayarlandı',
+                              ),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      ListTile(
+                        leading: currentLocale == 'en'
+                            ? const Icon(
+                                Icons.check_circle,
+                                color: Colors.green,
+                              )
+                            : const Icon(Icons.circle_outlined),
+                        title: const Row(
+                          children: [
+                            Text('🇬🇧', style: TextStyle(fontSize: 24)),
+                            SizedBox(width: 12),
+                            Text('English'),
+                          ],
+                        ),
+                        onTap: () {
+                          localeProvider.setLocale(const Locale('en'));
+                          Navigator.pop(dialogContext);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                AppLocalizations.of(
+                                      context,
+                                    )?.languageSetEnglish ??
+                                    'Language set to English',
+                              ),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      child: const Text('İptal / Cancel'),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -24,6 +130,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final localizations = AppLocalizations.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -38,7 +145,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ? null
                   : [
                       BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
+                        color: Colors.grey.withValues(alpha: 0.1),
                         spreadRadius: 1,
                         blurRadius: 4,
                         offset: const Offset(0, 2),
@@ -97,7 +204,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ? null
                   : [
                       BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
+                        color: Colors.grey.withValues(alpha: 0.1),
                         spreadRadius: 1,
                         blurRadius: 4,
                         offset: const Offset(0, 2),
@@ -106,9 +213,13 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             child: Column(
               children: [
+                _buildLanguageTile(context),
+                const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.lock),
-                  title: const Text('Gizlilik ve Güvenlik'),
+                  title: Text(
+                    localizations?.privacySecurity ?? 'Gizlilik ve Güvenlik',
+                  ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
                     Navigator.of(context).push(
@@ -119,13 +230,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.help_outline),
-                  title: const Text('Yardım ve Destek'),
+                  title: Text(localizations?.helpSupport ?? 'Yardım ve Destek'),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Destek için ana sayfadaki Canlı/Özel Ders kartını kullanın.')),
-                    );
-                  },
+                  onTap: () {},
                 ),
               ],
             ),
@@ -135,25 +242,27 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-
   void _showEditNameDialog(BuildContext context) {
-    final TextEditingController controller = TextEditingController(text: widget.userName);
+    final TextEditingController controller = TextEditingController(
+      text: widget.userName,
+    );
+    final localizations = AppLocalizations.of(context);
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('İsmi Düzenle'),
+          title: Text(localizations?.editName ?? 'İsmi Düzenle'),
           content: TextField(
             controller: controller,
-            decoration: const InputDecoration(
-              hintText: 'İsminizi girin',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              hintText: localizations?.enterName ?? 'İsminizi girin',
+              border: const OutlineInputBorder(),
             ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('İptal'),
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(localizations?.cancel ?? 'İptal'),
             ),
             ElevatedButton(
               onPressed: () {
@@ -161,9 +270,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 if (newName.isNotEmpty) {
                   widget.onNameChanged(newName);
                 }
-                Navigator.of(context).pop();
+                Navigator.of(dialogContext).pop();
               },
-              child: const Text('Kaydet'),
+              child: Text(localizations?.save ?? 'Kaydet'),
             ),
           ],
         );
@@ -171,5 +280,3 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 }
-
-

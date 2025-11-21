@@ -5,12 +5,8 @@ class PrivacyPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Gizlilik Şartları'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Gizlilik Şartları'), centerTitle: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -21,8 +17,8 @@ class PrivacyPage extends StatelessWidget {
               icon: Icons.privacy_tip,
               title: 'Gizlilik Şartları',
               content:
-                  'Ehliyet Soru Çözüm uygulaması, kullanıcıların deneyimini iyileştirmek ve temel işlevleri sağlamak amacıyla asgari düzeyde veri işler. ' 
-                  'Toplanan veriler yalnızca uygulamanın çalışması, kullanıcı ilerlemesinin saklanması ve temel analizler için kullanılır. ' 
+                  'Driving License uygulaması, kullanıcıların deneyimini iyileştirmek ve temel işlevleri sağlamak amacıyla asgari düzeyde veri işler. '
+                  'Toplanan veriler yalnızca uygulamanın çalışması, kullanıcı ilerlemesinin saklanması ve temel analizler için kullanılır. '
                   'Veriler, hukuka ve dürüstlük kurallarına uygun şekilde; amaçla sınırlı, ölçülü ve şeffaf biçimde işlenir.',
             ),
             const SizedBox(height: 12),
@@ -31,8 +27,8 @@ class PrivacyPage extends StatelessWidget {
               icon: Icons.storage_rounded,
               title: 'Verilerin Kullanımı',
               content:
-                  'Uygulama; çözülen sorular, başarı yüzdesi ve tema tercihleri gibi yerel cihaz verilerini saklayabilir. ' 
-                  'Bu bilgiler, profilinizde ilerleme göstermek ve kişiselleştirilmiş bir deneyim sunmak için kullanılır. ' 
+                  'Uygulama; çözülen sorular, başarı yüzdesi ve tema tercihleri gibi yerel cihaz verilerini saklayabilir. '
+                  'Bu bilgiler, profilinizde ilerleme göstermek ve kişiselleştirilmiş bir deneyim sunmak için kullanılır. '
                   'Herhangi bir kişisel veriniz, açık onayınız olmadan üçüncü taraflarla paylaşılmaz.',
             ),
             const SizedBox(height: 12),
@@ -41,8 +37,8 @@ class PrivacyPage extends StatelessWidget {
               icon: Icons.security_rounded,
               title: 'Veri Güvenliği',
               content:
-                  'Veri güvenliği, tasarımın her aşamasında göz önünde bulundurulur. ' 
-                  'Yerel depolanan bilgiler işletim sisteminin sağladığı güvenlik önlemleri ile korunur. ' 
+                  'Veri güvenliği, tasarımın her aşamasında göz önünde bulundurulur. '
+                  'Yerel depolanan bilgiler işletim sisteminin sağladığı güvenlik önlemleri ile korunur. '
                   'Harici servislere yönlendirmelerde (ör. YouTube) ilgili platformun gizlilik ve güvenlik ilkeleri geçerlidir.',
             ),
             const SizedBox(height: 12),
@@ -51,8 +47,8 @@ class PrivacyPage extends StatelessWidget {
               icon: Icons.balance,
               title: 'Kullanıcı Hakları',
               content:
-                  'Kullanıcılar; verilerine erişme, düzeltme, silme ve işlenmesini kısıtlama haklarına sahiptir. ' 
-                  'Uygulama içi profil bilgileriniz üzerinde tasarruf edebilirsiniz. ' 
+                  'Kullanıcılar; verilerine erişme, düzeltme, silme ve işlenmesini kısıtlama haklarına sahiptir. '
+                  'Uygulama içi profil bilgileriniz üzerinde tasarruf edebilirsiniz. '
                   'Gizlilikle ilgili sorularınız veya talepleriniz için bize uygulama içinden veya mağaza sayfasından ulaşabilirsiniz.',
             ),
           ],
@@ -61,7 +57,12 @@ class PrivacyPage extends StatelessWidget {
     );
   }
 
-  Widget _section(BuildContext context, {required IconData icon, required String title, required String content}) {
+  Widget _section(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String content,
+  }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16.0),
@@ -72,7 +73,7 @@ class PrivacyPage extends StatelessWidget {
             ? null
             : [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.08),
+                  color: Colors.grey.withValues(alpha: 0.08),
                   blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),
@@ -119,5 +120,3 @@ class PrivacyPage extends StatelessWidget {
     );
   }
 }
-
-

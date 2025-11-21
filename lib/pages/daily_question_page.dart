@@ -72,7 +72,7 @@ class _DailyQuestionPageState extends State<DailyQuestionPage> {
                 boxShadow: [
                   if (!isDark)
                     BoxShadow(
-                      color: Colors.black12.withOpacity(0.05),
+                      color: Colors.black12.withValues(alpha: 0.05),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -98,17 +98,17 @@ class _DailyQuestionPageState extends State<DailyQuestionPage> {
 
               if (_locked) {
                 if (isCorrect) {
-                  tileColor = Colors.green.withOpacity(0.12);
+                  tileColor = Colors.green.withValues(alpha: 0.12);
                   borderColor = Colors.green;
                   leadingIcon = Icons.check_circle;
                 } else if (isSelected && !isCorrect) {
-                  tileColor = Colors.red.withOpacity(0.12);
+                  tileColor = Colors.red.withValues(alpha: 0.12);
                   borderColor = Colors.red;
                   leadingIcon = Icons.cancel;
                 }
               } else if (isSelected) {
-                tileColor = (isDark ? Colors.white : Colors.black).withOpacity(
-                  0.06,
+                tileColor = (isDark ? Colors.white : Colors.black).withValues(
+                  alpha: 0.06,
                 );
               }
 
@@ -132,8 +132,8 @@ class _DailyQuestionPageState extends State<DailyQuestionPage> {
                       shape: BoxShape.circle,
                       border: Border.all(color: borderColor, width: 2),
                       color: leadingIcon != null
-                          ? (isCorrect ? Colors.green : Colors.red).withOpacity(
-                              0.15,
+                          ? (isCorrect ? Colors.green : Colors.red).withValues(
+                              alpha: 0.15,
                             )
                           : null,
                     ),
