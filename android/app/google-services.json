@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "608441754655",
-    "project_id": "oval-cyclist-472813-c6",
-    "storage_bucket": "oval-cyclist-472813-c6.firebasestorage.app"
+    "project_number": "438062902678",
+    "project_id": "driver-lisances",
+    "storage_bucket": "driver-lisances.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:608441754655:android:a529af69ea4d658a5e212a",
+        "mobilesdk_app_id": "1:438062902678:android:3014a1c45d2ac7b14ac1b7",
         "android_client_info": {
-          "package_name": "com.trafikkocu.app"
+          "package_name": "com.drivinglicense"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyASp25aUuvT78sxE3oaBXU4secEXjK1y9w"
+          "current_key": "AIzaSyAfSqjMxGaeKXyyz7XTXBJ7o18D5aaISfk"
         }
       ],
       "services": {

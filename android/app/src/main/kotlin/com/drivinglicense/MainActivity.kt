@@ -1,4 +1,4 @@
-package com.trafikkocu.app
+package com.drivinglicense
 
 import io.flutter.embedding.android.FlutterActivity
 

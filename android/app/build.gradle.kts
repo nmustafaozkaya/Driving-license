@@ -4,7 +4,9 @@ plugins {
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
     id("com.google.gms.google-services")
+
 }
+
 
 import java.util.Properties
 import java.io.FileInputStream
@@ -35,7 +37,7 @@ if (!storeFileResolved.exists()) {
 }
 
 android {
-    namespace = "com.trafikkocu.app"
+    namespace = "com.drivinglicense"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -50,7 +52,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.trafikkocu.app"
+        applicationId = "com.drivinglicense"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

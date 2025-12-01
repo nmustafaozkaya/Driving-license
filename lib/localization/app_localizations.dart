@@ -64,6 +64,32 @@ class AppLocalizations {
     'save': 'Kaydet',
     'language_set_turkish': 'Dil Türkçe olarak ayarlandı',
     'language_set_english': 'Language set to English',
+    'select_year': 'Yıl Seç',
+    'select_month': 'Ay Seç',
+    'select_day': 'Gün Seç',
+    'all': 'Hepsi',
+    'clear': 'Temizle',
+    'not_solved': 'Çözülmedi',
+    'solved': 'Çözüldü',
+    'continue_exam': 'Devam Et',
+    'no_questions_found': 'Soru bulunamadı',
+    'year': 'Yıl',
+    'month': 'Ay',
+    'day': 'Gün',
+    'language_change_warning': 'Dil değiştirmek soruları da değiştirecektir.',
+    'language_change_warning_title': 'Dil Değişikliği',
+    'go_back': 'Geri Dön',
+    'time': 'Süre',
+    'score': 'Puan',
+    'points_per_question': 'Her soru 2 puan',
+    'total_questions': 'Toplam Soru',
+    'risky': 'Riskli',
+    'congratulations': 'Tebrikler',
+    'exam_summary': 'Sınav Özeti',
+    'your_score': 'Puanınız',
+    'correct_answers': 'Doğru Cevaplar',
+    'wrong_answers': 'Yanlış Cevaplar',
+    'empty_answers': 'Boş Cevaplar',
   };
 
   // English translations
@@ -118,6 +144,32 @@ class AppLocalizations {
     'save': 'Save',
     'language_set_turkish': 'Dil Türkçe olarak ayarlandı',
     'language_set_english': 'Language set to English',
+    'select_year': 'Select Year',
+    'select_month': 'Select Month',
+    'select_day': 'Select Day',
+    'all': 'All',
+    'clear': 'Clear',
+    'not_solved': 'Not Solved',
+    'solved': 'Solved',
+    'continue_exam': 'Continue',
+    'no_questions_found': 'No questions found',
+    'year': 'Year',
+    'month': 'Month',
+    'day': 'Day',
+    'language_change_warning': 'Changing the language will also change the questions.',
+    'language_change_warning_title': 'Language Change',
+    'go_back': 'Go Back',
+    'time': 'Time',
+    'score': 'Score',
+    'points_per_question': 'Each question is 2 points',
+    'total_questions': 'Total Questions',
+    'risky': 'Risky',
+    'congratulations': 'Congratulations',
+    'exam_summary': 'Exam Summary',
+    'your_score': 'Your Score',
+    'correct_answers': 'Correct Answers',
+    'wrong_answers': 'Wrong Answers',
+    'empty_answers': 'Empty Answers',
   };
 
   String translate(String key) {
@@ -179,6 +231,32 @@ class AppLocalizations {
   String get save => translate('save');
   String get languageSetTurkish => translate('language_set_turkish');
   String get languageSetEnglish => translate('language_set_english');
+  String get selectYear => translate('select_year');
+  String get selectMonth => translate('select_month');
+  String get selectDay => translate('select_day');
+  String get all => translate('all');
+  String get clear => translate('clear');
+  String get notSolved => translate('not_solved');
+  String get solved => translate('solved');
+  String get continueExam => translate('continue_exam');
+  String get noQuestionsFound => translate('no_questions_found');
+  String get year => translate('year');
+  String get month => translate('month');
+  String get day => translate('day');
+  String get languageChangeWarning => translate('language_change_warning');
+  String get languageChangeWarningTitle => translate('language_change_warning_title');
+  String get goBack => translate('go_back');
+  String get time => translate('time');
+  String get score => translate('score');
+  String get pointsPerQuestion => translate('points_per_question');
+  String get totalQuestions => translate('total_questions');
+  String get risky => translate('risky');
+  String get congratulations => translate('congratulations');
+  String get examSummary => translate('exam_summary');
+  String get yourScore => translate('your_score');
+  String get correctAnswers => translate('correct_answers');
+  String get wrongAnswers => translate('wrong_answers');
+  String get emptyAnswers => translate('empty_answers');
 }
 
 class _AppLocalizationsDelegate

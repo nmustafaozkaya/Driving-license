@@ -39,11 +39,44 @@ class _ProfilePageState extends State<ProfilePage> {
             showDialog(
               context: context,
               builder: (dialogContext) {
+                final localizations = AppLocalizations.of(context);
                 return AlertDialog(
-                  title: const Text('Dil Seçin / Select Language'),
+                  title: Text(localizations?.selectLanguage ?? 'Dil Seçin / Select Language'),
                   content: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // Uyarı mesajı
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Colors.orange.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              color: Colors.orange[700],
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                localizations?.languageChangeWarning ??
+                                    'Dil değiştirmek soruları da değiştirecektir.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.orange[900],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                       ListTile(
                         leading: currentLocale == 'tr'
                             ? const Icon(
@@ -110,7 +143,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(dialogContext),
-                      child: const Text('İptal / Cancel'),
+                      child: Text(localizations?.cancel ?? 'İptal / Cancel'),
                     ),
                   ],
                 );

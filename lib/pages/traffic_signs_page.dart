@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import '../localization/locale_provider.dart';
+import '../localization/app_localizations.dart';
 
 class TrafficSignsPage extends StatefulWidget {
   const TrafficSignsPage({super.key});
@@ -10,25 +13,46 @@ class TrafficSignsPage extends StatefulWidget {
 }
 
 class _TrafficSignsPageState extends State<TrafficSignsPage> {
-  List<TrafficSign> signs = [];
+  List<TrafficSignCategory> categories = [];
   bool isLoading = true;
+  String selectedCategoryId = 'tehlike_uyari'; // Varsayılan olarak ilk kategori
 
   @override
   void initState() {
     super.initState();
     _loadTrafficSigns();
+    // Listen to locale changes
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    localeProvider.addListener(_onLocaleChanged);
+  }
+
+  void _onLocaleChanged() {
+    if (mounted) {
+      _loadTrafficSigns();
+    }
+  }
+
+  @override
+  void dispose() {
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    localeProvider.removeListener(_onLocaleChanged);
+    super.dispose();
   }
 
   Future<void> _loadTrafficSigns() async {
     try {
-      final String jsonString = await rootBundle.loadString(
-        'lib/data/traffic_signs.json',
-      );
+      final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+      final locale = localeProvider.locale;
+      final String jsonFileName = locale.languageCode == 'en' 
+          ? 'lib/data/traffic_signs_en.json'
+          : 'lib/data/traffic_signs.json';
+      
+      final String jsonString = await rootBundle.loadString(jsonFileName);
       final Map<String, dynamic> jsonData = json.decode(jsonString);
 
       setState(() {
-        signs = (jsonData['signs'] as List)
-            .map((sign) => TrafficSign.fromJson(sign))
+        categories = (jsonData['categories'] as List)
+            .map((cat) => TrafficSignCategory.fromJson(cat))
             .toList();
         isLoading = false;
       });
@@ -37,8 +61,16 @@ class _TrafficSignsPageState extends State<TrafficSignsPage> {
         isLoading = false;
       });
       if (mounted) {
+        final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+        final isEnglish = localeProvider.locale.languageCode == 'en';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Veriler yüklenirken hata oluştu: $e')),
+          SnackBar(
+            content: Text(
+              isEnglish
+                  ? 'Error loading data: $e'
+                  : 'Veriler yüklenirken hata oluştu: $e',
+            ),
+          ),
         );
       }
     }
@@ -47,26 +79,141 @@ class _TrafficSignsPageState extends State<TrafficSignsPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final localizations = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Trafik İşaretleri'), centerTitle: true),
+      appBar: AppBar(
+        title: Text(localizations?.trafficSigns ?? 'Trafik İşaretleri'),
+        centerTitle: true,
+      ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : signs.isEmpty
-          ? const Center(
-              child: Text(
-                'Trafik işaretleri yüklenemedi.',
-                style: TextStyle(fontSize: 16),
+          : categories.isEmpty
+              ? const Center(
+                  child: Text(
+                    'Trafik işaretleri yüklenemedi.',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                )
+              : Column(
+                  children: [
+                    _buildCategoryTabs(isDark),
+                    Expanded(child: _buildSignsList(isDark)),
+                  ],
+                ),
+    );
+  }
+
+  Widget _buildCategoryTabs(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+          ),
+        ),
+      ),
+      child: Row(
+        children: categories.map((category) {
+          final isSelected = category.id == selectedCategoryId;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  selectedCategoryId = category.id;
+                });
+              },
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                height: 60,
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? (isDark
+                          ? Colors.orange.withValues(alpha: 0.3)
+                          : Colors.orange.withValues(alpha: 0.2))
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: isSelected
+                        ? Colors.orange
+                        : (isDark ? Colors.grey[700]! : Colors.grey[300]!),
+                    width: isSelected ? 2 : 1,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    category.name,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected
+                          ? (isDark ? Colors.orange[300] : Colors.orange[700])
+                          : (isDark ? Colors.grey[400] : Colors.grey[600]),
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: signs.length,
-              itemBuilder: (context, index) {
-                final sign = signs[index];
-                return _buildSignItem(sign, isDark);
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildSignsList(bool isDark) {
+    final category = categories.firstWhere(
+      (cat) => cat.id == selectedCategoryId,
+      orElse: () => categories.isNotEmpty ? categories.first : TrafficSignCategory(
+        id: '',
+        name: '',
+        icon: '',
+        signs: [],
+      ),
+    );
+
+    if (category.signs.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.info_outline,
+              size: 64,
+              color: isDark ? Colors.grey[600] : Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            Builder(
+              builder: (context) {
+                final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+                final isEnglish = localeProvider.locale.languageCode == 'en';
+                return Text(
+                  isEnglish
+                      ? 'No signs in this category yet'
+                      : 'Bu kategoride henüz işaret bulunmuyor',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  ),
+                );
               },
             ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: category.signs.length,
+      itemBuilder: (context, index) {
+        final sign = category.signs[index];
+        return _buildSignItem(sign, isDark);
+      },
     );
   }
 
@@ -152,6 +299,32 @@ class _TrafficSignsPageState extends State<TrafficSignsPage> {
           ],
         ),
       ),
+    );
+  }
+
+}
+
+class TrafficSignCategory {
+  final String id;
+  final String name;
+  final String icon;
+  final List<TrafficSign> signs;
+
+  TrafficSignCategory({
+    required this.id,
+    required this.name,
+    required this.icon,
+    required this.signs,
+  });
+
+  factory TrafficSignCategory.fromJson(Map<String, dynamic> json) {
+    return TrafficSignCategory(
+      id: json['id'],
+      name: json['name'],
+      icon: json['icon'],
+      signs: (json['signs'] as List)
+          .map((sign) => TrafficSign.fromJson(sign))
+          .toList(),
     );
   }
 }

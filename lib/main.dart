@@ -21,8 +21,22 @@ import 'pages/traffic_signs_page.dart';
 import 'pages/police_isaretleri_page.dart';
 import 'pages/hiz_kurallari_page.dart';
 
+// Firebase imports
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
+  try {
+    await Firebase.initializeApp();
+    developer.log('Firebase initialized successfully');
+  } catch (e) {
+    developer.log('Firebase initialization error: $e', name: 'Firebase');
+  }
+
   final localeProvider = LocaleProvider();
   await localeProvider.loadLocale();
   runApp(
@@ -233,22 +247,27 @@ class _HomePageState extends State<HomePage> {
     _loadProgress();
   }
 
-  Future<Map<String, dynamic>?> _getDailyQuestionData() async {
+  Future<Map<String, dynamic>?> _getDailyQuestionData(
+    String languageCode,
+  ) async {
     try {
-      // TODO: Firebase will be added
-      // Tüm soruları getir
-      // final snap = await FirebaseFirestore.instance.collection('sorular').get();
+      // Use languageCode directly instead of accessing context in async operation
+      final collectionName = languageCode == 'en' ? 'en_sorular' : 'tr_sorular';
 
-      // if (snap.docs.isEmpty) {
-      //   print('No questions found in Firestore');
-      //   return null;
-      // }
+      // Get all questions from Firebase
+      final snap = await FirebaseFirestore.instance
+          .collection(collectionName)
+          .get();
 
-      // final docs = snap.docs.map((e) => e.data()).toList();
+      if (snap.docs.isEmpty) {
+        developer.log(
+          'No questions found in Firestore collection: $collectionName',
+        );
+        return null;
+      }
 
-      // TODO: Firebase will be added - The rest of this function depends on Firebase
-      // The following code is commented out until Firebase is added:
-      /*
+      final docs = snap.docs.map((e) => e.data()).toList();
+
       DateTime? parseExamDate(Map<String, dynamic> d) {
         final dynamic yilRaw = d['yıl'];
         final dynamic ayRaw = d['ay'];
@@ -267,8 +286,9 @@ class _HomePageState extends State<HomePage> {
           monthNumber = ayRaw;
         } else {
           final String ayText = (ayRaw ?? '').toString();
-          // Accept both Turkish month names and numeric strings
-          monthNumber = int.tryParse(ayText) ?? _getMonthNumber(ayText);
+          // Accept both Turkish/English month names and numeric strings
+          monthNumber =
+              int.tryParse(ayText) ?? _getMonthNumber(ayText, languageCode);
         }
 
         if (yil > 0 && monthNumber > 0 && gun > 0) {
@@ -307,17 +327,17 @@ class _HomePageState extends State<HomePage> {
         if (examQuestions.isNotEmpty) {
           foundExamQuestions = examQuestions;
           foundDate = checkDate;
-          print(
+          developer.log(
             'Found exam on date: ${checkDate.day}/${checkDate.month}/${checkDate.year}',
           );
-          print('Total questions found: ${foundExamQuestions.length}');
+          developer.log('Total questions found: ${foundExamQuestions.length}');
           break;
         }
       }
 
       if (foundExamQuestions.isEmpty || foundDate == null) {
         // 30 gün içinde bulunamadıysa, en yakın (en yeni) tarihi seç ve onu kullan
-        print(
+        developer.log(
           'No exam questions found in the last 30 days, falling back to latest date.',
         );
         DateTime? latestDate;
@@ -347,78 +367,112 @@ class _HomePageState extends State<HomePage> {
       // Bulunan tarihi döndür (QuizQuestionsPage için)
       final result = <String, dynamic>{
         'yil': foundDate.year,
-        'ay': _getMonthName(foundDate.month),
+        'ay': _getMonthName(foundDate.month, languageCode),
         'gun': foundDate.day,
         'totalQuestions': foundExamQuestions.length,
       };
 
       return result;
-      */
-
-      // Temporarily return null until Firebase is added
-      return null;
     } catch (e) {
-      developer.log('Error getting daily exam data: $e', name: 'DrivingLicenseApp');
+      developer.log(
+        'Error getting daily exam data: $e',
+        name: 'DrivingLicenseApp',
+      );
       return null;
     }
   }
 
-  // Commented out until Firebase is implemented
-  // int _getMonthNumber(String monthName) {
-  //   final months = {
-  //     'Ocak': 1,
-  //     'Şubat': 2,
-  //     'Mart': 3,
-  //     'Nisan': 4,
-  //     'Mayıs': 5,
-  //     'Haziran': 6,
-  //     'Temmuz': 7,
-  //     'Ağustos': 8,
-  //     'Eylül': 9,
-  //     'Ekim': 10,
-  //     'Kasım': 11,
-  //     'Aralık': 12,
-  //   };
-  //   return months[monthName] ?? 0;
-  // }
+  int _getMonthNumber(String monthName, String languageCode) {
+    if (languageCode == 'en') {
+      final months = {
+        'January': 1,
+        'February': 2,
+        'March': 3,
+        'April': 4,
+        'May': 5,
+        'June': 6,
+        'July': 7,
+        'August': 8,
+        'September': 9,
+        'October': 10,
+        'November': 11,
+        'December': 12,
+      };
+      return months[monthName] ?? 0;
+    } else {
+      final months = {
+        'Ocak': 1,
+        'Şubat': 2,
+        'Mart': 3,
+        'Nisan': 4,
+        'Mayıs': 5,
+        'Haziran': 6,
+        'Temmuz': 7,
+        'Ağustos': 8,
+        'Eylül': 9,
+        'Ekim': 10,
+        'Kasım': 11,
+        'Aralık': 12,
+      };
+      return months[monthName] ?? 0;
+    }
+  }
 
-  // Commented out until Firebase is implemented
-  // String _getMonthName(int monthNumber) {
-  //   final months = {
-  //     1: 'Ocak',
-  //     2: 'Şubat',
-  //     3: 'Mart',
-  //     4: 'Nisan',
-  //     5: 'Mayıs',
-  //     6: 'Haziran',
-  //     7: 'Temmuz',
-  //     8: 'Ağustos',
-  //     9: 'Eylül',
-  //     10: 'Ekim',
-  //     11: 'Kasım',
-  //     12: 'Aralık',
-  //   };
-  //   return months[monthNumber] ?? 'Ocak';
-  // }
+  String _getMonthName(int monthNumber, String languageCode) {
+    if (languageCode == 'en') {
+      final months = {
+        1: 'January',
+        2: 'February',
+        3: 'March',
+        4: 'April',
+        5: 'May',
+        6: 'June',
+        7: 'July',
+        8: 'August',
+        9: 'September',
+        10: 'October',
+        11: 'November',
+        12: 'December',
+      };
+      return months[monthNumber] ?? 'January';
+    } else {
+      final months = {
+        1: 'Ocak',
+        2: 'Şubat',
+        3: 'Mart',
+        4: 'Nisan',
+        5: 'Mayıs',
+        6: 'Haziran',
+        7: 'Temmuz',
+        8: 'Ağustos',
+        9: 'Eylül',
+        10: 'Ekim',
+        11: 'Kasım',
+        12: 'Aralık',
+      };
+      return months[monthNumber] ?? 'Ocak';
+    }
+  }
 
   Future<void> _loadProgress() async {
     try {
-      // TODO: Firebase will be added
-      // final prefs = await SharedPreferences.getInstance();
-      // First, get all available exams from Firebase
-      // final snapshot = await FirebaseFirestore.instance
-      //     .collection('sorular')
-      //     .get();
-      // final docs = snapshot.docs.map((e) => e.data()).toList();
+      final prefs = await SharedPreferences.getInstance();
 
-      // Temporarily set to 0 until Firebase is added
-      setState(() {
-        _totalQuestions = 0;
-        _solvedQuestions = 0;
-        _passProbability = 0.0;
-      });
+      // Get current language from LocaleProvider
+      if (!mounted) return;
+      final localeProvider = Provider.of<LocaleProvider>(
+        context,
+        listen: false,
+      );
+      final languageCode = localeProvider.locale.languageCode;
+      final collectionName = languageCode == 'en' ? 'en_sorular' : 'tr_sorular';
 
-      /* 
+      // Get all available exams from Firebase
+      final snapshot = await FirebaseFirestore.instance
+          .collection(collectionName)
+          .get();
+      final docs = snapshot.docs.map((e) => e.data()).toList();
+
       // Get unique exam dates
       final Map<String, Map<String, dynamic>> uniqueDates = {};
       for (final d in docs) {
@@ -454,6 +508,7 @@ class _HomePageState extends State<HomePage> {
         // We no longer track per-exam completion breakdown on the home header
       }
 
+      if (!mounted) return;
       setState(() {
         _totalQuestions = totalQuestions;
         _solvedQuestions = totalSolved;
@@ -461,9 +516,14 @@ class _HomePageState extends State<HomePage> {
             ? (totalSolved / totalQuestions).clamp(0.0, 1.0)
             : 0.0;
       });
-      */
     } catch (e) {
       developer.log('Error loading progress: $e', name: 'DrivingLicenseApp');
+      if (!mounted) return;
+      setState(() {
+        _totalQuestions = 0;
+        _solvedQuestions = 0;
+        _passProbability = 0.0;
+      });
     }
   }
 
@@ -471,9 +531,12 @@ class _HomePageState extends State<HomePage> {
     const String message =
         'Driving License uygulamasını dene! Sınav soruları, işaretler ve daha fazlası.';
     const String androidUrl =
-        'https://play.google.com/store/apps/details?id=com.trafikkocu.app';
+        'https://play.google.com/store/apps/details?id=com.drivinglicense';
     final shareText = '$message\n\nAndroid: $androidUrl';
     try {
+      // share_plus 12.0.1: Share.share() is deprecated but still functional
+      // The replacement API may vary by platform, so keeping current implementation
+      // ignore: deprecated_member_use
       await Share.share(shareText, subject: 'Driving License');
     } catch (e) {
       _showMessage('Paylaşım sırasında hata oluştu.');
@@ -482,7 +545,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _rateApp() async {
     // Prefer market:// if available; fallback to https
-    const String packageName = 'com.trafikkocu.app';
+    const String packageName = 'com.drivinglicense';
     final Uri marketUri = Uri.parse('market://details?id=$packageName');
     final Uri webUri = Uri.parse(
       'https://play.google.com/store/apps/details?id=$packageName',
@@ -545,6 +608,8 @@ class _HomePageState extends State<HomePage> {
                   _buildMainExamCard(),
                   const SizedBox(height: 8),
                   _buildDailyAndRandomExams(),
+                  const SizedBox(height: 8),
+                  _buildTrafficSignsCard(),
                   const SizedBox(height: 8),
                   _buildBottomCategoriesGrid(),
                 ],
@@ -1280,8 +1345,16 @@ class _HomePageState extends State<HomePage> {
     return GestureDetector(
       onTap: () async {
         try {
-          final data = await _getDailyQuestionData();
-          if (!mounted) return;
+          // Get language code before async operation to avoid context issues
+          if (!context.mounted) return;
+          final localeProvider = Provider.of<LocaleProvider>(
+            context,
+            listen: false,
+          );
+          final languageCode = localeProvider.locale.languageCode;
+
+          final data = await _getDailyQuestionData(languageCode);
+          if (!mounted || !context.mounted) return;
           if (data == null) {
             _showMessage('Günün sınavı yüklenemedi.');
             return;
@@ -1292,6 +1365,7 @@ class _HomePageState extends State<HomePage> {
           );
 
           // QuizQuestionsPage'e yönlendir (A,B,C,D seçenekleri ve ileri/geri butonları ile)
+          if (!context.mounted) return;
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => QuizQuestionsPage(
@@ -1359,6 +1433,87 @@ class _HomePageState extends State<HomePage> {
                   const SizedBox(height: 2),
                   Text(
                     localizations?.todayExamDesc ?? 'En güncel tarihli sınav',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Icon(
+              Icons.chevron_right,
+              color: isDark ? Colors.white : Colors.black54,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTrafficSignsCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final localizations = AppLocalizations.of(context);
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const TrafficSignsPage()));
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.grey.withValues(alpha: 0.1),
+                    spreadRadius: 1,
+                    blurRadius: 2,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.orange,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(7.0),
+                child: Image.asset(
+                  'lib/assests/icons/traffic_icon.png',
+                  fit: BoxFit.contain,
+                  cacheWidth: 80,
+                  filterQuality: FilterQuality.low,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    localizations?.trafficSigns ?? 'Trafik İşaretleri',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Tehlike, Tanzim ve Bilgi İşaretleri',
                     style: TextStyle(
                       fontSize: 11,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
