@@ -16,14 +16,23 @@ class _TrafficSignsPageState extends State<TrafficSignsPage> {
   List<TrafficSignCategory> categories = [];
   bool isLoading = true;
   String selectedCategoryId = 'tehlike_uyari'; // Varsayılan olarak ilk kategori
+  LocaleProvider?
+  _localeProvider; // Save reference to avoid context access in dispose
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Save reference to LocaleProvider when dependencies are available
+    if (_localeProvider == null) {
+      _localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+      _localeProvider!.addListener(_onLocaleChanged);
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     _loadTrafficSigns();
-    // Listen to locale changes
-    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
-    localeProvider.addListener(_onLocaleChanged);
   }
 
   void _onLocaleChanged() {
@@ -34,19 +43,22 @@ class _TrafficSignsPageState extends State<TrafficSignsPage> {
 
   @override
   void dispose() {
-    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
-    localeProvider.removeListener(_onLocaleChanged);
+    // Use saved reference instead of accessing context
+    _localeProvider?.removeListener(_onLocaleChanged);
     super.dispose();
   }
 
   Future<void> _loadTrafficSigns() async {
     try {
-      final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+      final localeProvider = Provider.of<LocaleProvider>(
+        context,
+        listen: false,
+      );
       final locale = localeProvider.locale;
-      final String jsonFileName = locale.languageCode == 'en' 
+      final String jsonFileName = locale.languageCode == 'en'
           ? 'lib/data/traffic_signs_en.json'
           : 'lib/data/traffic_signs.json';
-      
+
       final String jsonString = await rootBundle.loadString(jsonFileName);
       final Map<String, dynamic> jsonData = json.decode(jsonString);
 
@@ -61,7 +73,10 @@ class _TrafficSignsPageState extends State<TrafficSignsPage> {
         isLoading = false;
       });
       if (mounted) {
-        final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+        final localeProvider = Provider.of<LocaleProvider>(
+          context,
+          listen: false,
+        );
         final isEnglish = localeProvider.locale.languageCode == 'en';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -89,18 +104,18 @@ class _TrafficSignsPageState extends State<TrafficSignsPage> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : categories.isEmpty
-              ? const Center(
-                  child: Text(
-                    'Trafik işaretleri yüklenemedi.',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                )
-              : Column(
-                  children: [
-                    _buildCategoryTabs(isDark),
-                    Expanded(child: _buildSignsList(isDark)),
-                  ],
-                ),
+          ? const Center(
+              child: Text(
+                'Trafik işaretleri yüklenemedi.',
+                style: TextStyle(fontSize: 16),
+              ),
+            )
+          : Column(
+              children: [
+                _buildCategoryTabs(isDark),
+                Expanded(child: _buildSignsList(isDark)),
+              ],
+            ),
     );
   }
 
@@ -131,8 +146,8 @@ class _TrafficSignsPageState extends State<TrafficSignsPage> {
                 decoration: BoxDecoration(
                   color: isSelected
                       ? (isDark
-                          ? Colors.orange.withValues(alpha: 0.3)
-                          : Colors.orange.withValues(alpha: 0.2))
+                            ? Colors.orange.withValues(alpha: 0.3)
+                            : Colors.orange.withValues(alpha: 0.2))
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
@@ -148,7 +163,9 @@ class _TrafficSignsPageState extends State<TrafficSignsPage> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w500,
                       color: isSelected
                           ? (isDark ? Colors.orange[300] : Colors.orange[700])
                           : (isDark ? Colors.grey[400] : Colors.grey[600]),
@@ -168,12 +185,9 @@ class _TrafficSignsPageState extends State<TrafficSignsPage> {
   Widget _buildSignsList(bool isDark) {
     final category = categories.firstWhere(
       (cat) => cat.id == selectedCategoryId,
-      orElse: () => categories.isNotEmpty ? categories.first : TrafficSignCategory(
-        id: '',
-        name: '',
-        icon: '',
-        signs: [],
-      ),
+      orElse: () => categories.isNotEmpty
+          ? categories.first
+          : TrafficSignCategory(id: '', name: '', icon: '', signs: []),
     );
 
     if (category.signs.isEmpty) {
@@ -189,7 +203,10 @@ class _TrafficSignsPageState extends State<TrafficSignsPage> {
             const SizedBox(height: 16),
             Builder(
               builder: (context) {
-                final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+                final localeProvider = Provider.of<LocaleProvider>(
+                  context,
+                  listen: false,
+                );
                 final isEnglish = localeProvider.locale.languageCode == 'en';
                 return Text(
                   isEnglish
@@ -301,7 +318,6 @@ class _TrafficSignsPageState extends State<TrafficSignsPage> {
       ),
     );
   }
-
 }
 
 class TrafficSignCategory {
