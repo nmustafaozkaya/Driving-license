@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:provider/provider.dart';
-import '../localization/locale_provider.dart';
 
 /// Sayfa: Soru Ekleme Sayfası
 /// Açıklama: Firestore'a yeni soru eklemek için kullanılan admin sayfası
@@ -226,8 +224,6 @@ class _AddQuestionPageState extends State<AddQuestionPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Soru Ekle'),

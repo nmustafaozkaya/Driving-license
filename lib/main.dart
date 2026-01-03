@@ -268,6 +268,12 @@ class _HomePageState extends State<HomePage> {
 
       final docs = snap.docs.map((e) => e.data()).toList();
 
+      // Debug: Firestore'dan kaç belge çekildiğini log'la
+      developer.log(
+        'Firestore (_getDailyQuestionData): $collectionName koleksiyonundan ${docs.length} belge çekildi',
+        name: 'HomePage',
+      );
+
       DateTime? parseExamDate(Map<String, dynamic> d) {
         final dynamic yilRaw = d['yıl'];
         final dynamic ayRaw = d['ay'];
@@ -472,6 +478,12 @@ class _HomePageState extends State<HomePage> {
           .collection(collectionName)
           .get();
       final docs = snapshot.docs.map((e) => e.data()).toList();
+
+      // Debug: Firestore'dan kaç belge çekildiğini log'la
+      developer.log(
+        'Firestore (_loadProgress): $collectionName koleksiyonundan ${docs.length} belge çekildi',
+        name: 'HomePage',
+      );
 
       // Get unique exam dates
       final Map<String, Map<String, dynamic>> uniqueDates = {};
@@ -1539,25 +1551,30 @@ class _HomePageState extends State<HomePage> {
       CategoryItem(
         title:
             localizations?.trafficAndEnvironment ?? 'Trafik ve Çevre Bilgisi',
-        subtitle: 'kategori=Trafik ve Çevre Bilgisi',
+        subtitle:
+            localizations?.trafficAndEnvironment ?? 'Trafik ve Çevre Bilgisi',
+        firebaseCategory: 'Trafik ve Çevre Bilgisi',
         icon: Icons.traffic,
         color: Colors.red,
       ),
       CategoryItem(
         title: localizations?.firstAid ?? 'İlk Yardım Bilgisi',
-        subtitle: 'kategori=İlk Yardım Bilgisi',
+        subtitle: localizations?.firstAid ?? 'İlk Yardım Bilgisi',
+        firebaseCategory: 'İlk Yardım Bilgisi',
         icon: Icons.medical_services,
         color: Colors.orange,
       ),
       CategoryItem(
         title: localizations?.vehicleTechnical ?? 'Araç Teknik',
-        subtitle: 'kategori=Motor ve Araç Bakımı',
+        subtitle: localizations?.vehicleTechnical ?? 'Araç Teknik',
+        firebaseCategory: 'Motor ve Araç Bakımı',
         icon: Icons.build,
         color: Colors.blue,
       ),
       CategoryItem(
         title: localizations?.trafficEthics ?? 'Trafik Adabı',
-        subtitle: 'kategori=Trafik Adabı',
+        subtitle: localizations?.trafficEthics ?? 'Trafik Adabı',
+        firebaseCategory: 'Trafik Adabı',
         icon: Icons.handshake,
         color: Colors.purple,
       ),
@@ -1580,8 +1597,8 @@ class _HomePageState extends State<HomePage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () {
-        // subtitle encodes the kategori name
-        final String kategori = category.subtitle.replaceFirst('kategori=', '');
+        // firebaseCategory is used for Firebase queries (always Turkish)
+        final String kategori = category.firebaseCategory;
         final int count = _inferCountFromTitle(category.title);
         Navigator.of(context).push(
           MaterialPageRoute(
@@ -1668,14 +1685,16 @@ class _HomePageState extends State<HomePage> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                if (category.subtitle.startsWith('kategori='))
-                  Text(
-                    category.subtitle.replaceFirst('kategori=', ''),
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: isDark ? Colors.white70 : Colors.black54,
-                    ),
+                Text(
+                  category.subtitle,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isDark ? Colors.white70 : Colors.black54,
                   ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
             ),
           ],
@@ -1726,12 +1745,14 @@ class _HomePageState extends State<HomePage> {
 class CategoryItem {
   final String title;
   final String subtitle;
+  final String firebaseCategory; // Firebase için sabit Türkçe kategori adı
   final IconData icon;
   final Color color;
 
   CategoryItem({
     required this.title,
     required this.subtitle,
+    required this.firebaseCategory,
     required this.icon,
     required this.color,
   });
